@@ -447,6 +447,29 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+@keyframes pulse-orange {
+  0%, 100% {
+    box-shadow: 0 0 10px #ff9e00, 0 0 20px #ff9e00, 0 0 30px #ff9e00;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px #ff9e00, 0 0 30px #ff9e00, 0 0 45px #ff9e00;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes sway {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
 @keyframes slide-in {
   from {
     opacity: 0;
