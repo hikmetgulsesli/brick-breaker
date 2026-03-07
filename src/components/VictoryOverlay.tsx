@@ -7,6 +7,7 @@ interface VictoryOverlayProps {
   lives: number;
   onRestart: () => void;
   onMenu: () => void;
+  isLastLevel?: boolean;
 }
 
 /**
@@ -46,7 +47,7 @@ const calculateLivesBonus = (lives: number): number => {
   return lives * 500;
 };
 
-export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverlayProps) => {
+export const VictoryOverlay = ({ score, lives, onRestart, onMenu, isLastLevel = true }: VictoryOverlayProps) => {
   const maxScore = calculateMaxScore();
   const livesBonus = calculateLivesBonus(lives);
   const finalScore = score + livesBonus;

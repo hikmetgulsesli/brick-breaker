@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Orbitron, Rajdhani, Fira_Code } from "next/font/google";
+import { GameProvider } from "@/contexts/GameContext";
 import "./globals.css";
 
 const orbitron = Orbitron({
@@ -88,9 +89,11 @@ export default function RootLayout({
         <a href="#main-content" className="skip-to-main">
           Skip to main content
         </a>
-        <main id="main-content" role="main">
-          {children}
-        </main>
+        <GameProvider>
+          <main id="main-content" role="main">
+            {children}
+          </main>
+        </GameProvider>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useSyncExternalStore, useMemo } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore, useRef } from 'react';
 
 interface AccessibilitySettings {
   reducedMotion: boolean;
@@ -68,21 +68,27 @@ const getInitialSettings = (): AccessibilitySettings => {
 export const AccessibilitySettings = () => {
   const [settings, setSettings] = useState<AccessibilitySettings>(getInitialSettings);
   const [isVisible, setIsVisible] = useState(false);
-  
+
   // Sync with localStorage changes from other tabs - use useSyncExternalStore result to compute settings
   const storedSettingsRaw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  
-  // Use a ref to track if we need to sync from storage (only on changes, not initial)
-  const [lastSyncedRaw, setLastSyncedRaw] = useState<string | null>(storedSettingsRaw);
-  
+
+  // Use a ref to track the last synced value to avoid setState in effect cascade
+  const lastSyncedRawRef = useRef<string | null>(storedSettingsRaw);
+  const settingsRef = useRef(settings);
+
+  // Keep settings ref in sync
+  useEffect(() => {
+    settingsRef.current = settings;
+  }, [settings]);
+
   // Handle external storage changes without calling setState directly in render
   useEffect(() => {
-    if (storedSettingsRaw !== lastSyncedRaw) {
-      setLastSyncedRaw(storedSettingsRaw);
-      const parsed = parseSettings(storedSettingsRaw, settings);
+    if (storedSettingsRaw !== lastSyncedRawRef.current) {
+      lastSyncedRawRef.current = storedSettingsRaw;
+      const parsed = parseSettings(storedSettingsRaw, settingsRef.current);
       setSettings(parsed);
     }
-  }, [storedSettingsRaw, lastSyncedRaw, settings]);
+  }, [storedSettingsRaw]);
 
   // Apply settings to document
   useEffect(() => {
