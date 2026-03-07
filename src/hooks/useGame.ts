@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect, useSyncExternalStore } from 'react';
 import type { 
-  GameState, 
   Ball, 
   Paddle, 
   Brick, 
@@ -14,15 +13,16 @@ import type {
 } from '@/types/game';
 import { 
   GAME_CONFIG, 
-  LEVEL_PATTERNS
+  LEVEL_PATTERNS,
+  BRICK_COLORS,
+  BRICK_SCORES,
+  GameState
 } from '@/types/game';
 
 const INITIAL_STATS: GameStats = {
   score: 0,
   lives: GAME_CONFIG.MAX_LIVES,
   level: 1,
-  combo: 0,
-  comboMultiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER,
 };
 
 // localStorage hook using useSyncExternalStore
@@ -56,6 +56,8 @@ const createInitialPaddle = (): Paddle => ({
   y: GAME_CONFIG.CANVAS_HEIGHT - GAME_CONFIG.PADDLE_Y_OFFSET,
   width: GAME_CONFIG.PADDLE_WIDTH,
   height: GAME_CONFIG.PADDLE_HEIGHT,
+  powerUpState: 'none',
+  powerUpEndTime: null,
 });
 
 const createInitialBall = (): Ball => ({
@@ -86,6 +88,9 @@ const createBricks = (level: number): Brick[] => {
           width: GAME_CONFIG.BRICK_WIDTH,
           height: GAME_CONFIG.BRICK_HEIGHT,
           level: level as 1 | 2 | 3,
+          durability: level,
+          color: BRICK_COLORS[level as 1 | 2 | 3],
+          scoreValue: BRICK_SCORES[level as 1 | 2 | 3],
           active: true,
         });
       }
@@ -100,18 +105,8 @@ const getSpeedForLevel = (level: number): number => {
   return Math.min(speed, GAME_CONFIG.BALL_SPEED_MAX);
 };
 
-// Calculate score for a brick hit with combo
-const calculateBrickScore = (brickLevel: number, comboCount: number): { basePoints: number; totalPoints: number; newCombo: number; newMultiplier: number } => {
-  const newCombo = comboCount + 1;
-  const newMultiplier = GAME_CONFIG.COMBO_BASE_MULTIPLIER + (newCombo - 1) * GAME_CONFIG.COMBO_MULTIPLIER_INCREMENT;
-  const basePoints = brickLevel * GAME_CONFIG.BASE_POINTS_PER_BRICK;
-  const totalPoints = Math.floor(basePoints * newMultiplier);
-  
-  return { basePoints, totalPoints, newCombo, newMultiplier };
-};
-
 export const useGame = () => {
-  const [gameState, setGameState] = useState<GameState>('menu');
+  const [gameState, setGameState] = useState<GameState>(GameState.MENU);
   const [stats, setStats] = useState<GameStats>(INITIAL_STATS);
   const [paddle, setPaddle] = useState<Paddle>(createInitialPaddle());
   const [balls, setBalls] = useState<Ball[]>([createInitialBall()]);
@@ -121,10 +116,6 @@ export const useGame = () => {
   const [activePowerUp, setActivePowerUp] = useState<PowerUpType | null>(null);
   const highScores = useLocalStorage('brickBreakerHighScores', []);
   const [highScoresState, setHighScoresState] = useState<HighScore[]>(highScores);
-  
-  // Refs for tracking combo and scoring
-  const comboRef = useRef<{ count: number; multiplier: number }>({ count: 0, multiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER });
-  const paddleBounceRef = useRef(false);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
@@ -167,26 +158,12 @@ export const useGame = () => {
     });
   }, []);
   
-  // Reset combo when paddle is hit or life is lost
-  const resetCombo = useCallback(() => {
-    comboRef.current = { count: 0, multiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER };
-    setStats(prev => ({
-      ...prev,
-      combo: 0,
-      comboMultiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER,
-    }));
-  }, []);
-  
   // Start game
   const startGame = useCallback((level: number = 1) => {
-    comboRef.current = { count: 0, multiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER };
-    paddleBounceRef.current = false;
     setStats({
       score: 0,
       lives: GAME_CONFIG.MAX_LIVES,
       level,
-      combo: 0,
-      comboMultiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER,
     });
     setPaddle(createInitialPaddle());
     setBalls([createInitialBall()]);
@@ -194,12 +171,12 @@ export const useGame = () => {
     setPowerUps([]);
     setLasers([]);
     setActivePowerUp(null);
-    setGameState('playing');
+    setGameState(GameState.PLAYING);
   }, []);
   
   // Pause/Resume
   const togglePause = useCallback(() => {
-    setGameState(prev => prev === 'playing' ? 'paused' : 'playing');
+    setGameState(prev => prev === GameState.PLAYING ? GameState.PAUSED : GameState.PLAYING);
   }, []);
   
   // Return to menu
@@ -208,7 +185,7 @@ export const useGame = () => {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
-    setGameState('menu');
+    setGameState(GameState.MENU);
   }, []);
   
   // Update paddle position
@@ -243,6 +220,7 @@ export const useGame = () => {
         width: GAME_CONFIG.LASER_WIDTH,
         height: GAME_CONFIG.LASER_HEIGHT,
         active: true,
+        speed: GAME_CONFIG.LASER_SPEED,
       },
       {
         x: paddle.x + paddle.width * 0.75 - GAME_CONFIG.LASER_WIDTH,
@@ -250,6 +228,7 @@ export const useGame = () => {
         width: GAME_CONFIG.LASER_WIDTH,
         height: GAME_CONFIG.LASER_HEIGHT,
         active: true,
+        speed: GAME_CONFIG.LASER_SPEED,
       },
     ]);
   }, [activePowerUp, paddle]);
@@ -271,6 +250,7 @@ export const useGame = () => {
         width: 20,
         height: 20,
         dy: GAME_CONFIG.POWERUP_FALL_SPEED,
+        duration: type === 'wide' ? GAME_CONFIG.WIDE_DURATION : type === 'laser' ? GAME_CONFIG.LASER_DURATION : 0,
       },
     ]);
   }, []);
@@ -336,8 +316,6 @@ export const useGame = () => {
     }
     
     const gameLoop = () => {
-      paddleBounceRef.current = false;
-      
       setBalls(prevBalls => {
         const speed = getSpeedForLevel(stats.level);
         return prevBalls.map(ball => {
@@ -358,7 +336,7 @@ export const useGame = () => {
             newY = ball.radius;
           }
           
-          // Paddle collision - resets combo
+          // Paddle collision
           if (
             newY + ball.radius >= paddle.y &&
             newY - ball.radius <= paddle.y + paddle.height &&
@@ -371,12 +349,6 @@ export const useGame = () => {
             newDx = speed * Math.sin(angle);
             newDy = -speed * Math.cos(angle);
             newY = paddle.y - ball.radius;
-            
-            // Reset combo on paddle bounce
-            if (!paddleBounceRef.current) {
-              paddleBounceRef.current = true;
-              resetCombo();
-            }
           }
           
           // Ball out of bounds
@@ -394,14 +366,12 @@ export const useGame = () => {
         setStats(prev => {
           const newLives = prev.lives - 1;
           if (newLives <= 0) {
-            setGameState('gameOver');
+            setGameState(GameState.GAME_OVER);
             saveHighScore(prev.score, prev.level);
           } else {
             setBalls([createInitialBall()]);
             setActivePowerUp(null);
             setPaddle(createInitialPaddle());
-            // Reset combo on life lost
-            resetCombo();
           }
           return { ...prev, lives: newLives };
         });
@@ -410,7 +380,6 @@ export const useGame = () => {
       // Brick collisions
       setBricks(prevBricks => {
         let scoreIncrease = 0;
-        
         const updatedBricks = prevBricks.map(brick => {
           if (!brick.active) return brick;
           
@@ -423,16 +392,7 @@ export const useGame = () => {
               ball.y + ball.radius >= brick.y &&
               ball.y - ball.radius <= brick.y + brick.height
             ) {
-              // Calculate score with combo
-              const { totalPoints, newCombo, newMultiplier } = calculateBrickScore(
-                brick.level,
-                comboRef.current.count
-              );
-              
-              scoreIncrease += totalPoints;
-              
-              // Update combo refs
-              comboRef.current = { count: newCombo, multiplier: newMultiplier };
+              scoreIncrease += brick.level * 10;
               
               // Bounce ball
               setBalls(prev => prev.map(b => 
@@ -452,49 +412,20 @@ export const useGame = () => {
         });
         
         if (scoreIncrease > 0) {
-          setStats(prev => ({
-            ...prev,
-            score: prev.score + scoreIncrease,
-            combo: comboRef.current.count,
-            comboMultiplier: comboRef.current.multiplier,
-          }));
+          setStats(prev => ({ ...prev, score: prev.score + scoreIncrease }));
         }
         
         // Check victory
         if (updatedBricks.every(b => !b.active)) {
           if (stats.level < 3) {
-            // Calculate bonuses for level completion
-            const levelBonus = GAME_CONFIG.LEVEL_COMPLETION_BONUS;
-            const totalScore = stats.score + scoreIncrease + levelBonus;
-            
-            setStats(prev => ({
-              ...prev,
-              score: totalScore,
-              level: prev.level + 1,
-              combo: 0,
-              comboMultiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER,
-            }));
-            comboRef.current = { count: 0, multiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER };
-            
+            setStats(prev => ({ ...prev, level: prev.level + 1 }));
             setBricks(createBricks(stats.level + 1));
             setBalls([createInitialBall()]);
             setActivePowerUp(null);
             setPaddle(createInitialPaddle());
           } else {
-            // Final victory - add remaining lives bonus
-            const levelBonus = GAME_CONFIG.LEVEL_COMPLETION_BONUS;
-            const livesBonus = stats.lives * GAME_CONFIG.REMAINING_LIFE_BONUS;
-            const finalScore = stats.score + scoreIncrease + levelBonus + livesBonus;
-            
-            setStats(prev => ({
-              ...prev,
-              score: finalScore,
-              combo: 0,
-              comboMultiplier: GAME_CONFIG.COMBO_BASE_MULTIPLIER,
-            }));
-            
-            setGameState('victory');
-            saveHighScore(finalScore, stats.level);
+            setGameState(GameState.VICTORY);
+            saveHighScore(stats.score, stats.level);
           }
         }
         
@@ -532,7 +463,6 @@ export const useGame = () => {
       // Laser-brick collisions
       setBricks(prevBricks => {
         let scoreIncrease = 0;
-        
         const updatedBricks = prevBricks.map(brick => {
           if (!brick.active) return brick;
           
@@ -545,17 +475,7 @@ export const useGame = () => {
               laser.y < brick.y + brick.height &&
               laser.y + laser.height > brick.y
             ) {
-              // Calculate score with combo for laser hits too
-              const { totalPoints, newCombo, newMultiplier } = calculateBrickScore(
-                brick.level,
-                comboRef.current.count
-              );
-              
-              scoreIncrease += totalPoints;
-              
-              // Update combo refs
-              comboRef.current = { count: newCombo, multiplier: newMultiplier };
-              
+              scoreIncrease += brick.level * 10;
               laser.active = false;
               return { ...brick, active: false };
             }
@@ -565,12 +485,7 @@ export const useGame = () => {
         });
         
         if (scoreIncrease > 0) {
-          setStats(prev => ({
-            ...prev,
-            score: prev.score + scoreIncrease,
-            combo: comboRef.current.count,
-            comboMultiplier: comboRef.current.multiplier,
-          }));
+          setStats(prev => ({ ...prev, score: prev.score + scoreIncrease }));
         }
         
         setLasers(prev => prev.filter(l => l.active));
@@ -588,7 +503,7 @@ export const useGame = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameState, balls, paddle, bricks, lasers, stats.level, stats.score, stats.lives, saveHighScore, spawnPowerUp, applyPowerUp, resetCombo]);
+  }, [gameState, balls, paddle, bricks, lasers, stats.level, stats.score, saveHighScore, spawnPowerUp, applyPowerUp]);
   
   return {
     gameState,
