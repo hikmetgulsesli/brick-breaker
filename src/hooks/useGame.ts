@@ -430,9 +430,9 @@ export const useGame = () => {
               ball.y + ball.radius >= brick.y &&
               ball.y - ball.radius <= brick.y + brick.height
             ) {
-              scoreIncrease += brick.level * 10;
+              scoreIncrease += (brick.level ?? 1) * 10;
               brickHit = true;
-              hitBrickLevel = brick.level;
+              hitBrickLevel = brick.level ?? 1;
               
               // Bounce ball
               setBalls(prev => prev.map(b => 
@@ -521,7 +521,7 @@ export const useGame = () => {
               laser.y < brick.y + brick.height &&
               laser.y + laser.height > brick.y
             ) {
-              scoreIncrease += brick.level * 10;
+              scoreIncrease += (brick.level ?? 1) * 10;
               laser.active = false;
               return { ...brick, active: false };
             }

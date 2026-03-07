@@ -201,8 +201,6 @@ export const GameCanvas = () => {
           <MainMenu 
             onStart={startGame} 
             highScores={highScores} 
-            isMuted={isMuted}
-            onToggleMute={toggleMute}
           />
         )}
         

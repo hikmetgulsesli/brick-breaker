@@ -65,7 +65,7 @@ export const useGameRenderer = ({
     bricks.forEach(brick => {
       if (!brick.active) return;
       
-      const color = BRICK_COLORS[brick.level];
+      const color = BRICK_COLORS[brick.level ?? 1];
       
       // Brick shadow/glow
       ctx.shadowColor = color;
