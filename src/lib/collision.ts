@@ -336,7 +336,6 @@ export function checkSubFrameCollision(
   };
 
   // Ray from ball start to end
-  const rayStart = ballStart;
   const rayDelta = subtract(ballEnd, ballStart);
 
   // Check if already overlapping
@@ -346,29 +345,10 @@ export function checkSubFrameCollision(
     ballStart.y >= expandedRect.y &&
     ballStart.y <= expandedRect.y + expandedRect.height
   ) {
-    // Calculate proper normal based on closest edge
-    const distToLeft = ballStart.x - expandedRect.x;
-    const distToRight = expandedRect.x + expandedRect.width - ballStart.x;
-    const distToTop = ballStart.y - expandedRect.y;
-    const distToBottom = expandedRect.y + expandedRect.height - ballStart.y;
-
-    const minDist = Math.min(distToLeft, distToRight, distToTop, distToBottom);
-
-    let normal: Vector2;
-    if (minDist === distToLeft) {
-      normal = { x: -1, y: 0 };
-    } else if (minDist === distToRight) {
-      normal = { x: 1, y: 0 };
-    } else if (minDist === distToTop) {
-      normal = { x: 0, y: -1 };
-    } else {
-      normal = { x: 0, y: 1 };
-    }
-
     return {
       collided: true,
       timeOfImpact: 0,
-      normal,
+      normal: { x: 0, y: -1 }, // Default normal
       contactPoint: ballStart,
     };
   }
@@ -456,7 +436,7 @@ export function resolveBallCollision(
 
   // Correct position to prevent sinking
   const correction = multiply(collision.normal, collision.penetration);
-  const newPosition = add(ball.position, correction);
+  const newPosition = subtract(ball.position, correction);
 
   // Reflect velocity
   const newVelocity = reflectVelocity(ball.velocity, collision.normal);
@@ -544,10 +524,10 @@ export function checkAllBrickCollisions(
       result = checkCircleRectCollision(circle, brickAABB);
 
       if (result.collided) {
-        // When multiple bricks are hit in the same frame, resolve the one with the deepest penetration
-        if (!earliestCollision.collided || (result.penetration ?? 0) > (earliestCollision.penetration ?? 0)) {
-          earliestCollision = { ...result, brickId: brick.id };
-        }
+        return {
+          ...result,
+          brickId: brick.id,
+        };
       }
     }
   }
