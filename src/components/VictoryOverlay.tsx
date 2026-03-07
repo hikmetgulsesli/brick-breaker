@@ -1,6 +1,6 @@
 'use client';
 
-import { BRICK_SCORES } from '@/types/game';
+import { calculateCumulativeMaxScore, calculateStars, calculateLivesBonus } from '@/utils/score';
 
 interface VictoryOverlayProps {
   score: number;
@@ -9,45 +9,8 @@ interface VictoryOverlayProps {
   onMenu: () => void;
 }
 
-/**
- * Calculate maximum possible score for all 3 levels
- * Based on brick layout patterns
- */
-const calculateMaxScore = (): number => {
-  const patterns = [
-    // Level 1: 30 bricks (all level 1)
-    30 * BRICK_SCORES[1],
-    // Level 2: 22 level-2 + 14 level-1
-    22 * BRICK_SCORES[2] + 14 * BRICK_SCORES[1],
-    // Level 3: 16 level-3 + 20 level-2 + 10 level-1
-    16 * BRICK_SCORES[3] + 20 * BRICK_SCORES[2] + 10 * BRICK_SCORES[1],
-  ];
-  return patterns.reduce((sum, score) => sum + score, 0);
-};
-
-/**
- * Calculate star rating based on score percentage
- * 1 star: >30%, 2 stars: >60%, 3 stars: >90%
- */
-const calculateStars = (score: number, maxScore: number): number => {
-  if (maxScore === 0) return 0;
-  const percentage = score / maxScore;
-  if (percentage > 0.9) return 3;
-  if (percentage > 0.6) return 2;
-  if (percentage > 0.3) return 1;
-  return 0;
-};
-
-/**
- * Calculate lives bonus
- * 500 points per remaining life
- */
-const calculateLivesBonus = (lives: number): number => {
-  return lives * 500;
-};
-
 export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverlayProps) => {
-  const maxScore = calculateMaxScore();
+  const maxScore = calculateCumulativeMaxScore(3); // Victory is for completing all 3 levels
   const livesBonus = calculateLivesBonus(lives);
   const finalScore = score + livesBonus;
   const stars = calculateStars(finalScore, maxScore);

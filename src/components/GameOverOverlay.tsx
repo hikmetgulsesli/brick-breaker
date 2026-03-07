@@ -1,6 +1,6 @@
 'use client';
 
-import { BRICK_SCORES } from '@/types/game';
+import { calculateCumulativeMaxScore, calculateStars } from '@/utils/score';
 
 interface GameOverOverlayProps {
   score: number;
@@ -9,43 +9,8 @@ interface GameOverOverlayProps {
   onMenu: () => void;
 }
 
-/**
- * Calculate maximum possible score for a level
- * Based on brick layout patterns
- */
-const calculateMaxScore = (level: number): number => {
-  const patterns = [
-    // Level 1: 30 bricks (all level 1)
-    30 * BRICK_SCORES[1],
-    // Level 2: 10 level-2 + 14 level-1 + 6 level-2 + 6 level-2 = 22 level-2 + 14 level-1
-    22 * BRICK_SCORES[2] + 14 * BRICK_SCORES[1],
-    // Level 3: 10 level-3 + 10 level-2 + 10 level-1 + 10 level-2 + 6 level-3 = 16 level-3 + 20 level-2 + 10 level-1
-    16 * BRICK_SCORES[3] + 20 * BRICK_SCORES[2] + 10 * BRICK_SCORES[1],
-  ];
-  
-  // Sum max scores for all levels up to current
-  let total = 0;
-  for (let i = 0; i < level && i < patterns.length; i++) {
-    total += patterns[i];
-  }
-  return total;
-};
-
-/**
- * Calculate star rating based on score percentage
- * 1 star: >30%, 2 stars: >60%, 3 stars: >90%
- */
-const calculateStars = (score: number, maxScore: number): number => {
-  if (maxScore === 0) return 0;
-  const percentage = score / maxScore;
-  if (percentage > 0.9) return 3;
-  if (percentage > 0.6) return 2;
-  if (percentage > 0.3) return 1;
-  return 0;
-};
-
 export const GameOverOverlay = ({ score, level, onRestart, onMenu }: GameOverOverlayProps) => {
-  const maxScore = calculateMaxScore(level);
+  const maxScore = calculateCumulativeMaxScore(level);
   const stars = calculateStars(score, maxScore);
   
   return (
