@@ -18,6 +18,7 @@ import {
   BRICK_SCORES,
   GameState
 } from '@/types/game';
+import { getSoundManager, getBrickHitFrequency } from '@/utils/sound';
 
 const INITIAL_STATS: GameStats = {
   score: 0,
@@ -114,6 +115,7 @@ export const useGame = () => {
   const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
   const [lasers, setLasers] = useState<Laser[]>([]);
   const [activePowerUp, setActivePowerUp] = useState<PowerUpType | null>(null);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
   const highScores = useLocalStorage('brickBreakerHighScores', []);
   const [highScoresState, setHighScoresState] = useState<HighScore[]>(highScores);
   
@@ -122,6 +124,9 @@ export const useGame = () => {
   const lastShotTime = useRef<number>(0);
   const powerUpTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canvasRectRef = useRef<DOMRect | null>(null);
+  const soundManagerRef = useRef(getSoundManager());
+  const lastBallsRef = useRef<Ball[]>([]);
+  const lifeLostTriggeredRef = useRef(false);
   
   // Sync highScores to state when loaded from localStorage
   useEffect(() => {
@@ -156,6 +161,13 @@ export const useGame = () => {
       localStorage.setItem('brickBreakerHighScores', JSON.stringify(updated));
       return updated;
     });
+  }, []);
+  
+  // Toggle mute
+  const toggleMute = useCallback(() => {
+    const newMuted = soundManagerRef.current.toggleMute();
+    setIsMuted(newMuted);
+    return newMuted;
   }, []);
   
   // Start game
@@ -257,6 +269,9 @@ export const useGame = () => {
   
   // Apply power-up
   const applyPowerUp = useCallback((type: PowerUpType) => {
+    // Play power-up collect sound
+    soundManagerRef.current.play('powerUpCollect');
+    
     // First, revert any existing power-up effect
     if (activePowerUp === 'wide') {
       setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH }));
@@ -325,6 +340,7 @@ export const useGame = () => {
           let newY = ball.y + ball.dy;
           let newDx = ball.dx;
           let newDy = ball.dy;
+          let paddleHit = false;
           
           // Wall collisions
           if (newX - ball.radius <= 0 || newX + ball.radius >= GAME_CONFIG.CANVAS_WIDTH) {
@@ -349,6 +365,12 @@ export const useGame = () => {
             newDx = speed * Math.sin(angle);
             newDy = -speed * Math.cos(angle);
             newY = paddle.y - ball.radius;
+            paddleHit = true;
+          }
+          
+          // Play paddle hit sound
+          if (paddleHit) {
+            soundManagerRef.current.play('paddleHit');
           }
           
           // Ball out of bounds
@@ -362,13 +384,19 @@ export const useGame = () => {
       
       // Check for active balls
       const activeBallsCount = balls.filter(b => b.active).length;
-      if (activeBallsCount === 0 && balls.length > 0) {
+      const prevActiveBallsCount = lastBallsRef.current.filter(b => b.active).length;
+      
+      // Ball just lost - play sound once
+      if (activeBallsCount === 0 && prevActiveBallsCount > 0 && !lifeLostTriggeredRef.current) {
+        lifeLostTriggeredRef.current = true;
         setStats(prev => {
           const newLives = prev.lives - 1;
           if (newLives <= 0) {
+            soundManagerRef.current.play('gameOver');
             setGameState(GameState.GAME_OVER);
             saveHighScore(prev.score, prev.level);
           } else {
+            soundManagerRef.current.play('lifeLost');
             setBalls([createInitialBall()]);
             setActivePowerUp(null);
             setPaddle(createInitialPaddle());
@@ -377,9 +405,19 @@ export const useGame = () => {
         });
       }
       
+      // Reset flag when balls are restored
+      if (activeBallsCount > 0) {
+        lifeLostTriggeredRef.current = false;
+      }
+      
+      // Store current balls for next frame comparison
+      lastBallsRef.current = balls;
+      
       // Brick collisions
       setBricks(prevBricks => {
         let scoreIncrease = 0;
+        let brickHit = false;
+        let hitBrickLevel = 1;
         const updatedBricks = prevBricks.map(brick => {
           if (!brick.active) return brick;
           
@@ -393,6 +431,8 @@ export const useGame = () => {
               ball.y - ball.radius <= brick.y + brick.height
             ) {
               scoreIncrease += brick.level * 10;
+              brickHit = true;
+              hitBrickLevel = brick.level;
               
               // Bounce ball
               setBalls(prev => prev.map(b => 
@@ -411,6 +451,11 @@ export const useGame = () => {
           return brick;
         });
         
+        // Play brick hit sound with pitch based on durability
+        if (brickHit) {
+          soundManagerRef.current.play('brickHit', { pitch: getBrickHitFrequency(hitBrickLevel) });
+        }
+        
         if (scoreIncrease > 0) {
           setStats(prev => ({ ...prev, score: prev.score + scoreIncrease }));
         }
@@ -424,6 +469,7 @@ export const useGame = () => {
             setActivePowerUp(null);
             setPaddle(createInitialPaddle());
           } else {
+            soundManagerRef.current.play('victory');
             setGameState(GameState.VICTORY);
             saveHighScore(stats.score, stats.level);
           }
@@ -514,6 +560,7 @@ export const useGame = () => {
     powerUps,
     lasers,
     activePowerUp,
+    isMuted,
     highScores: highScoresState,
     canvasRef,
     startGame,
@@ -521,5 +568,6 @@ export const useGame = () => {
     returnToMenu,
     updatePaddlePosition,
     shootLaser,
+    toggleMute,
   };
 };

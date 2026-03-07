@@ -20,6 +20,7 @@ export const GameCanvas = () => {
     powerUps,
     lasers,
     activePowerUp,
+    isMuted,
     highScores,
     canvasRef,
     startGame,
@@ -27,6 +28,7 @@ export const GameCanvas = () => {
     returnToMenu,
     updatePaddlePosition,
     shootLaser,
+    toggleMute,
   } = useGame();
   
   useGameRenderer({
@@ -90,6 +92,8 @@ export const GameCanvas = () => {
             lives={stats.lives}
             level={stats.level}
             activePowerUp={activePowerUp}
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
           />
         )}
         
@@ -106,7 +110,12 @@ export const GameCanvas = () => {
         
         {/* Screens */}
         {gameState === 'menu' && (
-          <MainMenu onStart={startGame} highScores={highScores} />
+          <MainMenu 
+            onStart={startGame} 
+            highScores={highScores} 
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
+          />
         )}
         
         {gameState === 'paused' && (
@@ -121,7 +130,7 @@ export const GameCanvas = () => {
           <GameOverOverlay 
             score={stats.score}
             level={stats.level}
-            onRestart={() => startGame(stats.level)}
+            onRestart={() => startGame(1)}
             onMenu={returnToMenu}
           />
         )}
