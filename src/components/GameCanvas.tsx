@@ -246,8 +246,8 @@ export function GameCanvas({
         if (brick.visible && checkBrickCollision(ball, brick)) {
           brick.visible = false;
           ball.dy = -ball.dy;
-          setScore(scoreRef.current + brick.points);
           scoreRef.current += brick.points;
+          setScore(scoreRef.current);
           spawnPowerUp(brick.x + brick.width / 2, brick.y + brick.height / 2);
         }
       });

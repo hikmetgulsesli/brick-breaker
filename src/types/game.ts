@@ -8,7 +8,7 @@ export interface HighScoresState {
   scores: Score[];
 }
 
-export type GameScreen = 'menu' | 'game' | 'high-scores' | 'game-over' | 'victory';
+export type GameScreen = 'menu' | 'game' | 'high-scores' | 'game-over';
 
 export interface GameState {
   screen: GameScreen;

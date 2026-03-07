@@ -21,17 +21,20 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
   // Return a wrapped version of useState's setter function that persists to localStorage
   const setValue = useCallback((value: T | ((prev: T) => T)) => {
     try {
-      // Allow value to be a function so we have same API as useState
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
+      // Use functional update to avoid stale closure issues
+      setStoredValue((prev) => {
+        const valueToStore = value instanceof Function ? value(prev) : value;
+        
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        }
+        
+        return valueToStore;
+      });
     } catch (error) {
       console.warn(`Error setting localStorage key "${key}":`, error);
     }
-  }, [key, storedValue]);
+  }, [key]);
 
   // Listen for changes from other tabs/windows
   useEffect(() => {
