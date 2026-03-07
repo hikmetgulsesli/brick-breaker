@@ -1,0 +1,5 @@
+STATUS: done
+STORY_BRANCH: 8fad9b28-US-015
+PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/3
+CHANGES: Created NeonButton reusable component with 4 variants and hover glow effects. Created ParticleBackground component with animated floating neon particles. Enhanced MainMenu with pulsing title animation, keyboard navigation (Tab/Enter), level selector buttons, and high scores view. Added comprehensive design tokens for retro neon aesthetic.
+TESTS: No test runner configured
