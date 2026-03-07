@@ -34,7 +34,7 @@ export const NeonButton = forwardRef<HTMLButtonElement, NeonButtonProps>(
     
     const glowClass = glowOnHover ? 'neon-button-glow' : '';
     
-    const combinedClass = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${glowClass} ${className}`.trim();
+    const combinedClass = [baseStyles, variantStyles[variant], sizeStyles[size], glowClass, className].filter(Boolean).join(' ');
     
     return (
       <button 

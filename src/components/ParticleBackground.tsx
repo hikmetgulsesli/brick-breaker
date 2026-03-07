@@ -105,14 +105,26 @@ export const ParticleBackground = ({
     initParticles();
     animate();
 
-    window.addEventListener('resize', () => {
-      resizeCanvas();
-      initParticles();
-    });
+    // Debounce resize handler to avoid excessive calls
+    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
+    const handleResize = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+      resizeTimeout = setTimeout(() => {
+        resizeCanvas();
+        initParticles();
+      }, 200);
+    };
+
+    window.addEventListener('resize', handleResize);
 
     return () => {
       cancelAnimationFrame(animationRef.current);
-      window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('resize', handleResize);
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
     };
   }, [particleCount, colors, speed]);
 
