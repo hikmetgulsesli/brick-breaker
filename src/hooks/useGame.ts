@@ -311,11 +311,13 @@ export const useGame = () => {
 
     setActivePowerUp(type);
 
+    // Determine duration once for consistency
+    let duration: number | null = null;
+
     switch (type) {
       case 'wide':
         setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH_WIDE }));
-        powerUpEndTimeRef.current = Date.now() + GAME_CONFIG.WIDE_DURATION;
-        setPowerUpTimeRemaining(GAME_CONFIG.WIDE_DURATION);
+        duration = GAME_CONFIG.WIDE_DURATION;
         break;
       case 'multiball':
         setBalls(prev => {
@@ -333,10 +335,13 @@ export const useGame = () => {
         setPowerUpTimeRemaining(null);
         return;
       case 'laser':
-        // Laser active for 8 seconds
-        powerUpEndTimeRef.current = Date.now() + GAME_CONFIG.LASER_DURATION;
-        setPowerUpTimeRemaining(GAME_CONFIG.LASER_DURATION);
+        duration = GAME_CONFIG.LASER_DURATION;
         break;
+    }
+
+    if (duration !== null) {
+      powerUpEndTimeRef.current = Date.now() + duration;
+      setPowerUpTimeRemaining(duration);
     }
 
     // Start countdown interval for timer display
@@ -351,9 +356,9 @@ export const useGame = () => {
       }
     }, 100);
 
-    // Power-up expires after duration (except multiball)
-    const duration = type === 'wide' ? GAME_CONFIG.WIDE_DURATION : type === 'laser' ? GAME_CONFIG.LASER_DURATION : 10000;
-    powerUpTimeoutRef.current = setTimeout(() => {
+    // Power-up expires after duration (except multiball which returns early)
+    if (duration !== null) {
+      powerUpTimeoutRef.current = setTimeout(() => {
       setActivePowerUp(() => {
         // Only revert if this specific power-up is still active
         if (type === 'wide') {
@@ -366,7 +371,8 @@ export const useGame = () => {
         clearInterval(powerUpIntervalRef.current);
         powerUpIntervalRef.current = null;
       }
-    }, duration);
+      }, duration);
+    }
   }, [activePowerUp]);
   
   // Game loop
