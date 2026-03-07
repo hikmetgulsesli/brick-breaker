@@ -1,225 +1,143 @@
-/**
- * Brick Breaker Game
- *
- * Main game page integrating:
- * - Main Menu
- * - Game HUD with life system
- * - Game Canvas with physics
- * - Game Overlays (Pause, Game Over, Victory)
- * - Game state management
- */
-
 'use client';
 
-import { useReducer, useEffect, useCallback, useMemo, useRef } from 'react';
-import { HUD, GameOverlay, MainMenu, GameCanvas } from '../components';
-import { GameStateData, GameAction } from '../lib/gameState';
-import { gameStateReducer, createInitialState } from '../lib/gameReducer';
+import { useState, useCallback, useEffect } from 'react';
+import { MainMenu, HighScores, GameCanvas, PauseOverlay, GameOverScreen } from '@/components';
+import { useHighScores } from '@/hooks';
+import type { GameScreen } from '@/types/game';
 
-/** Load high score from localStorage */
-function loadHighScore(): number {
-  if (typeof window === 'undefined') return 0;
-  const saved = localStorage.getItem('brick-breaker-highscore');
-  return saved ? parseInt(saved, 10) || 0 : 0;
-}
+export default function Home() {
+  const [screen, setScreen] = useState<GameScreen>('menu');
+  const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [lives, setLives] = useState(3);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isVictory, setIsVictory] = useState(false);
 
-/** Save high score to localStorage */
-function saveHighScore(score: number): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('brick-breaker-highscore', score.toString());
-}
+  const { scores, addScore, clearScores, formatDate, hasScores } = useHighScores();
 
-/** Load unlocked levels from localStorage */
-function loadUnlockedLevels(): number[] {
-  if (typeof window === 'undefined') return [1];
-  const saved = localStorage.getItem('brick-breaker-unlocked');
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch {
-      return [1];
-    }
-  }
-  return [1];
-}
-
-/** Save unlocked levels to localStorage */
-function saveUnlockedLevels(levels: number[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('brick-breaker-unlocked', JSON.stringify(levels));
-}
-
-export default function BrickBreakerPage() {
-  // Initialize game state with high score from localStorage
-  const [gameState, dispatch] = useReducer(
-    (state: GameStateData, action: GameAction) => {
-      return gameStateReducer(state, action);
-    },
-    null,
-    () => {
-      const initial = createInitialState();
-      const highScore = loadHighScore();
-      return {
-        ...initial,
-        score: {
-          ...initial.score,
-          highScore,
-        },
-      };
-    }
-  );
-
-  // Track previous high score for useEffect comparison
-  const prevHighScoreRef = useRef<number>(gameState.score.highScore);
-
-  // Persist high score when it changes (side effect in useEffect, not reducer)
-  useEffect(() => {
-    if (gameState.score.highScore !== prevHighScoreRef.current) {
-      saveHighScore(gameState.score.highScore);
-      prevHighScoreRef.current = gameState.score.highScore;
-    }
-  }, [gameState.score.highScore]);
-
-  // Compute unlocked levels using useMemo for initial load
-  const unlockedLevels = useMemo(() => loadUnlockedLevels(), []);
-
-  // Track unlocked levels in state for useEffect to save
-  const effectiveUnlockedLevels = useMemo(() => {
-    const currentLevel = gameState.level.currentLevel;
-    if (!unlockedLevels.includes(currentLevel)) {
-      return [...unlockedLevels, currentLevel].sort((a, b) => a - b);
-    }
-    return unlockedLevels;
-  }, [gameState.level.currentLevel, unlockedLevels]);
-
-  // Save unlocked levels to localStorage when they change (side effect in useEffect)
-  useEffect(() => {
-    const currentLevel = gameState.level.currentLevel;
-    if (!unlockedLevels.includes(currentLevel)) {
-      const newUnlocked = [...unlockedLevels, currentLevel].sort((a, b) => a - b);
-      saveUnlockedLevels(newUnlocked);
-    }
-  }, [gameState.level.currentLevel, unlockedLevels]);
-
-  // Handle keyboard controls
+  // Handle keyboard events
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'p':
-        case 'P':
-          if (gameState.state === 'PLAYING') {
-            dispatch({ type: 'PAUSE_GAME' });
-          } else if (gameState.state === 'PAUSED') {
-            dispatch({ type: 'RESUME_GAME' });
-          }
-          break;
-        case 'Escape':
-          if (gameState.state === 'PLAYING' || gameState.state === 'PAUSED') {
-            dispatch({ type: 'RETURN_TO_MENU' });
-          }
-          break;
+      if (e.key === 'Escape' && screen === 'game' && !isPaused) {
+        setIsPaused(true);
+      } else if (e.key === 'Escape' && screen === 'game' && isPaused) {
+        setIsPaused(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState.state]);
+  }, [screen, isPaused]);
 
-  // Game action handlers
-  const handleStartGame = useCallback((levelNumber: number) => {
-    dispatch({ type: 'SET_LEVEL', payload: levelNumber });
+  const startGame = useCallback(() => {
+    setScore(0);
+    setLevel(1);
+    setLives(3);
+    setIsPaused(false);
+    setIsVictory(false);
+    setScreen('game');
+  }, []);
+
+  const showHighScores = useCallback(() => {
+    setScreen('high-scores');
+  }, []);
+
+  const showMenu = useCallback(() => {
+    setIsPaused(false);
+    setScreen('menu');
+  }, []);
+
+  const handleGameOver = useCallback((finalScore: number) => {
+    addScore(finalScore);
+    setIsVictory(false);
+    setScreen('game-over');
+  }, [addScore]);
+
+  const handleVictory = useCallback((finalScore: number) => {
+    addScore(finalScore);
+    setIsVictory(true);
+    setScreen('game-over');
+  }, [addScore]);
+
+  const handlePause = useCallback(() => {
+    setIsPaused(true);
   }, []);
 
   const handleResume = useCallback(() => {
-    dispatch({ type: 'RESUME_GAME' });
+    setIsPaused(false);
   }, []);
 
   const handleRestart = useCallback(() => {
-    dispatch({ type: 'RESTART_GAME' });
+    setScore(0);
+    setLevel(1);
+    setLives(3);
+    setIsPaused(false);
+    setScreen('game');
   }, []);
 
-  const handleRestartLevel = useCallback(() => {
-    dispatch({ type: 'RESTART_LEVEL' });
-  }, []);
+  const renderScreen = () => {
+    switch (screen) {
+      case 'menu':
+        return (
+          <MainMenu
+            onStartGame={startGame}
+            onShowHighScores={showHighScores}
+          />
+        );
 
-  const handleReturnToMenu = useCallback(() => {
-    dispatch({ type: 'RETURN_TO_MENU' });
-  }, []);
+      case 'high-scores':
+        return (
+          <HighScores
+            scores={scores}
+            formatDate={formatDate}
+            onClearScores={clearScores}
+            onBack={showMenu}
+            hasScores={hasScores}
+          />
+        );
 
-  const handleLifeLost = useCallback(() => {
-    dispatch({ type: 'LOSE_LIFE' });
-  }, []);
+      case 'game':
+        return (
+          <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
+            <GameCanvas
+              onGameOver={handleGameOver}
+              onVictory={handleVictory}
+              onPause={handlePause}
+              isPaused={isPaused}
+              score={score}
+              setScore={setScore}
+              level={level}
+              lives={lives}
+              setLives={setLives}
+            />
+            {isPaused && (
+              <PauseOverlay
+                onResume={handleResume}
+                onRestart={handleRestart}
+                onMenu={showMenu}
+              />
+            )}
+          </div>
+        );
 
-  const handleScoreAdd = useCallback((points: number) => {
-    dispatch({ type: 'ADD_SCORE', payload: points });
-  }, []);
+      case 'game-over':
+        return (
+          <GameOverScreen
+            score={score}
+            isVictory={isVictory}
+            onPlayAgain={startGame}
+            onMenu={showMenu}
+          />
+        );
 
-  const handleLevelComplete = useCallback(() => {
-    dispatch({ type: 'LEVEL_COMPLETE' });
-  }, []);
-
-  const handleProgressUpdate = useCallback((destroyed: number, total: number) => {
-    dispatch({ type: 'UPDATE_BRICK_PROGRESS', payload: { destroyed, total } });
-  }, []);
-
-  // Show main menu
-  if (gameState.state === 'MENU') {
-    return (
-      <MainMenu
-        highScore={gameState.score.highScore}
-        unlockedLevels={effectiveUnlockedLevels}
-        onStartGame={handleStartGame}
-      />
-    );
-  }
+      default:
+        return <MainMenu onStartGame={startGame} onShowHighScores={showHighScores} />;
+    }
+  };
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        background: 'linear-gradient(180deg, #0a0a14 0%, #141420 50%, #0a0a14 100%)',
-      }}
-    >
-      {/* HUD - Always visible during gameplay */}
-      <HUD
-        lives={gameState.lives}
-        score={gameState.score}
-        level={gameState.level}
-        activePowerUp={null}
-      />
-
-      {/* Game Canvas */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '16px',
-        }}
-      >
-        <GameCanvas
-          levelNumber={gameState.level.currentLevel}
-          onLifeLost={handleLifeLost}
-          onScoreAdd={handleScoreAdd}
-          onLevelComplete={handleLevelComplete}
-          onProgressUpdate={handleProgressUpdate}
-          isPaused={gameState.state === 'PAUSED'}
-        />
-      </div>
-
-      {/* Game Overlays */}
-      <GameOverlay
-        gameState={gameState.state}
-        score={gameState.score}
-        level={gameState.level}
-        lives={gameState.lives}
-        onResume={handleResume}
-        onRestart={gameState.state === 'PAUSED' ? handleRestartLevel : handleRestart}
-        onReturnToMenu={handleReturnToMenu}
-      />
+    <main className="min-h-screen">
+      {renderScreen()}
     </main>
   );
 }

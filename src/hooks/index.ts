@@ -1,1 +1,2 @@
-export { useInput, type InputState, type UseInputOptions, type UseInputReturn } from './useInput';
+export { useLocalStorage } from './useLocalStorage';
+export { useHighScores } from './useHighScores';
