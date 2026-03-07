@@ -170,6 +170,17 @@ export class Ball {
   }
 
   /**
+   * Set ball velocity (useful for testing)
+   */
+  setVelocity(velocityX: number, velocityY: number): void {
+    this.state.velocityX = velocityX;
+    this.state.velocityY = velocityY;
+  }
+
+  /** Tolerance for paddle collision detection in pixels */
+  private static readonly PADDLE_COLLISION_TOLERANCE = 10;
+
+  /**
    * Update ball position and handle collisions
    * Returns true if life was lost
    */
@@ -182,7 +193,9 @@ export class Ball {
     this.applySpeedIncrease();
 
     // Update position based on velocity
-    const adjustedDelta = deltaTime * 60; // Normalize to ~60fps
+    // Cap deltaTime to prevent huge jumps when tab is in background (max ~33ms = 30fps)
+    const cappedDelta = Math.min(deltaTime, 1 / 30);
+    const adjustedDelta = cappedDelta * 60; // Normalize to ~60fps
     this.state.x += this.state.velocityX * adjustedDelta;
     this.state.y += this.state.velocityY * adjustedDelta;
 
@@ -307,7 +320,7 @@ export class Ball {
       this.state.x >= paddleLeft &&
       this.state.x <= paddleRight &&
       this.state.y + this.state.radius >= paddleTop &&
-      this.state.y - this.state.radius <= paddleTop + 10 && // Small tolerance
+      this.state.y - this.state.radius <= paddleTop + Ball.PADDLE_COLLISION_TOLERANCE && // Tolerance for collision detection
       this.state.velocityY > 0 // Ball must be moving downward
     ) {
       // Calculate hit position relative to paddle center (-1 to 1)
@@ -454,10 +467,10 @@ export class Ball {
   }
 
   /**
-   * Check if ball collides with a brick
+   * Check if ball collides with a brick and resolve the collision
    * Returns true if collision occurred
    */
-  checkBrickCollision(
+  resolveBrickCollision(
     brickLeft: number,
     brickRight: number,
     brickTop: number,

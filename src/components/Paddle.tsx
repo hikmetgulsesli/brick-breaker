@@ -102,9 +102,9 @@ export const PaddleComponent = forwardRef<PaddleComponentRef, PaddleComponentPro
     useImperativeHandle(ref, () => ({
       getState: () => paddleRef.current?.getState() ?? {
         x: 0.5,
-        y: 0,
-        width: 100,
-        height: 16,
+        y: canvasHeight - (config?.bottomMargin ?? 20) - (config?.height ?? 16),
+        width: config?.normalWidth ?? 100,
+        height: config?.height ?? 16,
         type: 'normal',
         hasLaser: false,
       },
@@ -120,7 +120,7 @@ export const PaddleComponent = forwardRef<PaddleComponentRef, PaddleComponentPro
       deactivateWide: () => paddleRef.current?.deactivateWide(),
       setLaser: (enabled: boolean) => paddleRef.current?.setLaser(enabled),
       reset: () => paddleRef.current?.reset(),
-    }), []);
+    }), [canvasHeight, config]);
 
     return (
       <canvas

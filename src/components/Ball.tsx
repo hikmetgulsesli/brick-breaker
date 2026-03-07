@@ -75,11 +75,7 @@ export const BallComponent = forwardRef<BallComponentRef, BallComponentProps>(
     // Initialize ball instance
     useEffect(() => {
       ballRef.current = new Ball(canvasWidth, canvasHeight, config);
-
-      if (onLifeLost) {
-        ballRef.current.onLifeLost(onLifeLost);
-      }
-    }, [canvasWidth, canvasHeight, config, onLifeLost]);
+    }, [canvasWidth, canvasHeight, config]);
 
     // Update life lost callback
     useEffect(() => {
@@ -107,13 +103,13 @@ export const BallComponent = forwardRef<BallComponentRef, BallComponentProps>(
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
       // Update ball if active
-      if (isActiveRef.current) {
+      if (isActive) {
         ballRef.current.update(deltaTime, paddleX, paddleWidth, paddleY);
       }
 
       // Render ball
       ballRef.current.render(ctx);
-    });
+    }, [isActive, canvasWidth, canvasHeight, deltaTime, paddleX, paddleWidth, paddleY]);
 
     // Expose imperative handle
     useImperativeHandle(ref, () => ({
@@ -138,7 +134,7 @@ export const BallComponent = forwardRef<BallComponentRef, BallComponentProps>(
       setPosition: (x: number, y: number) => ballRef.current?.setPosition(x, y),
       getSpeed: () => ballRef.current?.getSpeed() ?? 0,
       checkBrickCollision: (left: number, right: number, top: number, bottom: number) =>
-        ballRef.current?.checkBrickCollision(left, right, top, bottom) ?? false,
+        ballRef.current?.resolveBrickCollision(left, right, top, bottom) ?? false,
     }), [canvasWidth, canvasHeight]);
 
     return (

@@ -297,8 +297,11 @@ export class Paddle {
     y: number,
     halfWidth: number
   ): void {
-    const laserWidth = 4;
-    const laserHeight = 8;
+    // Laser indicator constants
+    const LASER_WIDTH = 4;
+    const LASER_HEIGHT = 8;
+    const LASER_OFFSET_X = 5; // Distance from paddle edge
+    const LASER_Y_OFFSET = 2; // Slight offset from paddle top
     
     ctx.save();
     ctx.shadowColor = '#ff0000';
@@ -306,10 +309,10 @@ export class Paddle {
     ctx.fillStyle = '#ff3333';
 
     // Left laser
-    ctx.fillRect(centerX - halfWidth + 5, y - laserHeight + 2, laserWidth, laserHeight);
+    ctx.fillRect(centerX - halfWidth + LASER_OFFSET_X, y - LASER_HEIGHT + LASER_Y_OFFSET, LASER_WIDTH, LASER_HEIGHT);
     
     // Right laser
-    ctx.fillRect(centerX + halfWidth - 5 - laserWidth, y - laserHeight + 2, laserWidth, laserHeight);
+    ctx.fillRect(centerX + halfWidth - LASER_OFFSET_X - LASER_WIDTH, y - LASER_HEIGHT + LASER_Y_OFFSET, LASER_WIDTH, LASER_HEIGHT);
 
     ctx.restore();
   }

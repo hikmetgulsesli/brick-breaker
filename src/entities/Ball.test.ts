@@ -110,9 +110,7 @@ describe('Ball Entity', () => {
       ball.launch();
 
       // Set velocity to move left
-      const state = ball.getState();
-      state.velocityX = -10;
-      state.velocityY = 0;
+      ball.setVelocity(-10, 0);
 
       ball.update(1 / 60, 400, 100, 550);
 
@@ -125,9 +123,7 @@ describe('Ball Entity', () => {
       ball.launch();
 
       // Set velocity to move right
-      const state = ball.getState();
-      state.velocityX = 10;
-      state.velocityY = 0;
+      ball.setVelocity(10, 0);
 
       ball.update(1 / 60, 400, 100, 550);
 
@@ -140,9 +136,7 @@ describe('Ball Entity', () => {
       ball.launch();
 
       // Set velocity to move up
-      const state = ball.getState();
-      state.velocityX = 0;
-      state.velocityY = -10;
+      ball.setVelocity(0, -10);
 
       ball.update(1 / 60, 400, 100, 550);
 
@@ -154,8 +148,8 @@ describe('Ball Entity', () => {
       ball.setPosition(5, 300);
       ball.launch();
 
-      const state = ball.getState();
-      state.velocityX = -20; // Fast leftward velocity
+      // Fast leftward velocity
+      ball.setVelocity(-20, 0);
 
       ball.update(1 / 60, 400, 100, 550);
 
@@ -177,9 +171,8 @@ describe('Ball Entity', () => {
       // Position ball directly above paddle center
       ball.setPosition(paddleX, paddleY - DEFAULT_BALL_CONFIG.radius - 1);
 
-      const state = ball.getState();
-      state.velocityX = 0;
-      state.velocityY = 5; // Moving down
+      // Moving down
+      ball.setVelocity(0, 5);
 
       ball.update(1 / 60, paddleX, paddleWidth, paddleY);
 
@@ -197,9 +190,8 @@ describe('Ball Entity', () => {
       // Position ball at paddle left edge
       ball.setPosition(paddleX - paddleHalfWidth + 5, paddleY - DEFAULT_BALL_CONFIG.radius - 1);
 
-      const state = ball.getState();
-      state.velocityX = 0;
-      state.velocityY = 5; // Moving down
+      // Moving down
+      ball.setVelocity(0, 5);
 
       ball.update(1 / 60, paddleX, paddleWidth, paddleY);
 
@@ -224,9 +216,7 @@ describe('Ball Entity', () => {
         testBall.launch();
         testBall.setPosition(posX, paddleY - DEFAULT_BALL_CONFIG.radius - 1);
 
-        const state = testBall.getState();
-        state.velocityX = 0;
-        state.velocityY = 5;
+        testBall.setVelocity(0, 5);
 
         testBall.update(1 / 60, paddleX, paddleWidth, paddleY);
 
@@ -243,9 +233,7 @@ describe('Ball Entity', () => {
     it('should enforce minimum speed of 4px/frame', () => {
       ball.launch();
 
-      const state = ball.getState();
-      state.velocityX = 1;
-      state.velocityY = 1;
+      ball.setVelocity(1, 1);
 
       ball.update(1 / 60, 400, 100, 550);
 
@@ -255,9 +243,7 @@ describe('Ball Entity', () => {
     it('should enforce maximum speed of 12px/frame', () => {
       ball.launch();
 
-      const state = ball.getState();
-      state.velocityX = 20;
-      state.velocityY = 20;
+      ball.setVelocity(20, 20);
 
       ball.update(1 / 60, 400, 100, 550);
 
@@ -271,9 +257,7 @@ describe('Ball Entity', () => {
       });
       customBall.launch();
 
-      const state = customBall.getState();
-      state.velocityX = 25;
-      state.velocityY = 25;
+      customBall.setVelocity(25, 25);
 
       customBall.update(1 / 60, 400, 100, 550);
 
@@ -289,7 +273,7 @@ describe('Ball Entity', () => {
 
       // Position ball below canvas
       ball.setPosition(400, CANVAS_HEIGHT + 20);
-      ball.getState().velocityY = 5; // Moving down
+      ball.setVelocity(0, 5); // Moving down
 
       const lifeLost = ball.update(1 / 60, 400, 100, 550);
 
@@ -368,7 +352,7 @@ describe('Ball Entity', () => {
     it('should detect collision with brick', () => {
       ball.setPosition(200, 200);
 
-      const hit = ball.checkBrickCollision(190, 210, 190, 210);
+      const hit = ball.resolveBrickCollision(190, 210, 190, 210);
 
       expect(hit).toBe(true);
     });
@@ -376,7 +360,7 @@ describe('Ball Entity', () => {
     it('should not detect collision when far from brick', () => {
       ball.setPosition(100, 100);
 
-      const hit = ball.checkBrickCollision(500, 600, 500, 600);
+      const hit = ball.resolveBrickCollision(500, 600, 500, 600);
 
       expect(hit).toBe(false);
     });
@@ -385,12 +369,10 @@ describe('Ball Entity', () => {
       ball.setPosition(100, 200);
       ball.launch();
 
-      const state = ball.getState();
-      state.velocityX = 5;
-      state.velocityY = 0;
+      ball.setVelocity(5, 0);
 
-      const initialVelocityX = state.velocityX;
-      ball.checkBrickCollision(90, 110, 150, 250);
+      const initialVelocityX = ball.getState().velocityX;
+      ball.resolveBrickCollision(90, 110, 150, 250);
 
       // Velocity X should have reversed
       expect(ball.getState().velocityX).toBe(-initialVelocityX);
@@ -400,12 +382,10 @@ describe('Ball Entity', () => {
       ball.setPosition(200, 100);
       ball.launch();
 
-      const state = ball.getState();
-      state.velocityX = 0;
-      state.velocityY = 5;
+      ball.setVelocity(0, 5);
 
-      const initialVelocityY = state.velocityY;
-      ball.checkBrickCollision(150, 250, 90, 110);
+      const initialVelocityY = ball.getState().velocityY;
+      ball.resolveBrickCollision(150, 250, 90, 110);
 
       // Velocity Y should have reversed
       expect(ball.getState().velocityY).toBe(-initialVelocityY);
