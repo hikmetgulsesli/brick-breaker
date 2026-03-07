@@ -146,7 +146,7 @@ export const BRICK_SCORES = {
 
 export const POWERUP_COLORS = {
   wide: '#00f5ff',
-  multiball: '#bc13fe',
+  multiball: '#ff9e00',
   laser: '#ff073a',
 } as const;
 
