@@ -114,11 +114,25 @@ export const useGame = () => {
   const animationRef = useRef<number | null>(null);
   const lastShotTime = useRef<number>(0);
   const powerUpTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canvasRectRef = useRef<DOMRect | null>(null);
   
   // Sync highScores to state when loaded from localStorage
   useEffect(() => {
     setHighScoresState(highScores);
   }, [highScores]);
+  
+  // Cache canvas rect for performance
+  useEffect(() => {
+    const updateCanvasRect = () => {
+      if (canvasRef.current) {
+        canvasRectRef.current = canvasRef.current.getBoundingClientRect();
+      }
+    };
+    
+    updateCanvasRect();
+    window.addEventListener('resize', updateCanvasRect);
+    return () => window.removeEventListener('resize', updateCanvasRect);
+  }, []);
   
   // Save high score
   const saveHighScore = useCallback((score: number, level: number) => {
@@ -171,10 +185,9 @@ export const useGame = () => {
   const updatePaddlePosition = useCallback((clientX: number) => {
     if (gameState !== 'playing' && gameState !== 'paused') return;
     
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const rect = canvasRectRef.current;
+    if (!rect) return;
     
-    const rect = canvas.getBoundingClientRect();
     const scaleX = GAME_CONFIG.CANVAS_WIDTH / rect.width;
     const x = (clientX - rect.left) * scaleX;
     
@@ -234,9 +247,15 @@ export const useGame = () => {
   
   // Apply power-up
   const applyPowerUp = useCallback((type: PowerUpType) => {
+    // First, revert any existing power-up effect
+    if (activePowerUp === 'wide') {
+      setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH }));
+    }
+    
     // Clear previous power-up timeout
     if (powerUpTimeoutRef.current) {
       clearTimeout(powerUpTimeoutRef.current);
+      powerUpTimeoutRef.current = null;
     }
     
     setActivePowerUp(type);
@@ -266,12 +285,15 @@ export const useGame = () => {
     
     // Power-up expires after 10 seconds (except multiball)
     powerUpTimeoutRef.current = setTimeout(() => {
-      setActivePowerUp(null);
-      if (type === 'wide') {
-        setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH }));
-      }
+      setActivePowerUp(() => {
+        // Only revert if this specific power-up is still active
+        if (type === 'wide') {
+          setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH }));
+        }
+        return null;
+      });
     }, 10000);
-  }, []);
+  }, [activePowerUp]);
   
   // Game loop
   useEffect(() => {

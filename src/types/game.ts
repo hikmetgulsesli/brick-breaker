@@ -62,16 +62,27 @@ export interface HighScore {
   level: number;
 }
 
+// Color constants for consistent theming
+export const COLORS = {
+  BG_DARKER: '#050508',
+  NEON_CYAN: '#00f5ff',
+  NEON_PINK: '#ff00a0',
+  NEON_GREEN: '#39ff14',
+  NEON_RED: '#ff073a',
+  NEON_ORANGE: '#ff9e00',
+  NEON_PURPLE: '#bc13fe',
+} as const;
+
 export const BRICK_COLORS = {
-  1: '#39ff14',
-  2: '#ff9e00',
-  3: '#ff073a',
+  1: COLORS.NEON_GREEN,
+  2: COLORS.NEON_ORANGE,
+  3: COLORS.NEON_RED,
 } as const;
 
 export const POWERUP_COLORS = {
-  wide: '#00f5ff',
-  multiball: '#bc13fe',
-  laser: '#ff073a',
+  wide: COLORS.NEON_CYAN,
+  multiball: COLORS.NEON_PURPLE,
+  laser: COLORS.NEON_RED,
 } as const;
 
 export const GAME_CONFIG = {
