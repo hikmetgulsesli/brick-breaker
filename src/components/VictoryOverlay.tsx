@@ -5,21 +5,22 @@ import { calculateCumulativeMaxScore, calculateStars, calculateLivesBonus } from
 interface VictoryOverlayProps {
   score: number;
   lives: number;
+  level: number;
   onRestart: () => void;
   onMenu: () => void;
 }
 
-export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverlayProps) => {
+export const VictoryOverlay = ({ score, lives, level, onRestart, onMenu }: VictoryOverlayProps) => {
   const maxScore = calculateCumulativeMaxScore(3); // Victory is for completing all 3 levels
   const livesBonus = calculateLivesBonus(lives);
   const finalScore = score + livesBonus;
   const stars = calculateStars(finalScore, maxScore);
-  
+
   return (
     <div className="screen-overlay animate-fade-in" data-testid="victory-overlay">
-      <h2 
-        className="screen-title" 
-        style={{ 
+      <h2
+        className="screen-title"
+        style={{
           background: 'linear-gradient(90deg, var(--neon-green), var(--neon-cyan))',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
@@ -28,8 +29,7 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
       >
         VICTORY!
       </h2>
-      
-      {/* Star Rating */}
+
       <div className="star-rating" data-testid="star-rating">
         {[1, 2, 3].map(star => (
           <svg
@@ -43,39 +43,51 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
           </svg>
         ))}
       </div>
-      
-      {/* Base Score */}
+
       <div className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }} data-testid="base-score">
         Base Score: {score.toLocaleString()}
       </div>
-      
-      {/* Lives Bonus */}
-      <div 
-        className="text-sm mb-2" 
-        style={{ color: 'var(--neon-green)' }} 
+
+      <div
+        className="text-sm mb-2"
+        style={{ color: 'var(--neon-green)' }}
         data-testid="lives-bonus"
       >
         Lives Bonus: +{livesBonus.toLocaleString()} ({lives} × 500)
       </div>
-      
-      {/* Final Score */}
+
       <div className="score-display" style={{ color: 'var(--neon-green)' }} data-testid="final-score">
         {finalScore.toLocaleString()}
       </div>
-      
+
       <p className="screen-subtitle" data-testid="completion-text">
         All levels completed!
       </p>
-      
+
+      <div className="victory-score-breakdown">
+        <div className="breakdown-row">
+          <span className="breakdown-label">Level Reached</span>
+          <span className="breakdown-value">{level}</span>
+        </div>
+        <div className="breakdown-row">
+          <span className="breakdown-label">Lives Remaining</span>
+          <span className="breakdown-value">{lives}</span>
+        </div>
+        <div className="breakdown-row">
+          <span className="breakdown-label">Lives Bonus</span>
+          <span className="breakdown-value">+{livesBonus.toLocaleString()}</span>
+        </div>
+      </div>
+
       <div className="menu-buttons">
-        <button 
+        <button
           className="menu-button menu-button-primary"
           onClick={onRestart}
           data-testid="play-again-button"
         >
           PLAY AGAIN
         </button>
-        <button 
+        <button
           className="menu-button menu-button-secondary"
           onClick={onMenu}
           data-testid="main-menu-button"
