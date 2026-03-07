@@ -1,32 +1,21 @@
-
-=== US-009: Life system and game state management ===
-COMPLETED: 2026-03-07T21:30:00+03:00
-FILES_CHANGED:
-  - src/lib/gameState.ts (new)
-  - src/lib/gameReducer.ts (new)
-  - src/lib/__tests__/gameState.test.ts (new)
-  - src/components/HUD.tsx (new)
-  - src/components/GameOverlay.tsx (new)
-  - src/components/MainMenu.tsx (new)
-  - src/components/GameCanvas.tsx (new)
-  - src/components/index.ts (new)
-  - src/entities/types.ts (new)
-  - src/entities/Brick.ts (new)
-  - src/entities/levels.ts (new)
-  - src/entities/index.ts (new)
-  - src/lib/collision.ts (new)
-  - src/app/page.tsx
-  - src/app/globals.css
-  - src/app/layout.tsx
-KEY_DECISIONS:
-  - Used immutable reducer pattern for game state management
-  - Life system with 3 starting lives, max 5 lives
-  - Game states: MENU, PLAYING, PAUSED, GAME_OVER, VICTORY
-  - Neon heart icons with pulse animation for lives display
-  - localStorage persistence for high score and unlocked levels
-  - GameCanvas uses refs for game loop to avoid closure issues
-  - Keyboard controls: P to pause, ESC for menu
-DEPENDENCIES_ADDED: none
-PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/12
-
-=== Story US-009 Complete ===
+=== US-012: Power-ups system - Multi-Ball ===
+COMPLETED: 2025-03-07T22:03:30+03:00
+FILES CHANGED:
+  - src/types/game.ts (updated POWERUP_COLORS.multiball to #ff9e00)
+  - src/components/HUD.tsx (fixed multiball color display)
+  - src/hooks/useGameRenderer.ts (added pulsing glow and sway animation for multiball)
+  - src/app/globals.css (added pulse-orange and sway keyframes)
+  - src/hooks/__tests__/useGame.multiball.test.tsx (15 comprehensive tests)
+  - src/test/setup.ts (vitest test setup with canvas mock)
+  - vitest.config.ts (vitest configuration)
+  - package.json (added test scripts and vitest dependencies)
+  - tsconfig.json (excluded test files from build)
+  - eslint.config.mjs (added dist to ignores)
+KEY DECISIONS:
+  - Changed multiball power-up color from purple (#bc13fe) to orange (#ff9e00) per spec
+  - Added time-based animation using useRef to track frame time for smooth pulsing/sway
+  - Implemented separate rendering path for multiball vs other power-ups for richer visuals
+  - Set up Vitest with jsdom for component testing
+DEPENDENCIES ADDED:
+  - vitest, @vitejs/plugin-react, jsdom (testing framework)
+  - @testing-library/react, @testing-library/jest-dom (React testing utilities)
