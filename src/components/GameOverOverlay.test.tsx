@@ -22,9 +22,9 @@ describe('GameOverOverlay', () => {
 
   describe('star rating', () => {
     it('shows 0 stars for score ≤30% of max', () => {
-      // Level 1 max score is 440 (44 bricks × 10 points - from LEVEL_PATTERNS)
-      // 30% of 440 = 132, so 100 points should give 0 stars
-      render(<GameOverOverlay {...defaultProps} score={100} level={1} />);
+      // Level 1 max score is 300 (30 bricks × 10 points)
+      // 30% of 300 = 90, so 80 points should give 0 stars
+      render(<GameOverOverlay {...defaultProps} score={80} level={1} />);
       const stars = screen.getAllByTestId(/star-\d/);
       expect(stars[0]).not.toHaveClass('filled');
       expect(stars[1]).not.toHaveClass('filled');
@@ -32,27 +32,27 @@ describe('GameOverOverlay', () => {
     });
 
     it('shows 1 star for score >30% of max', () => {
-      // Level 1 max score is 440
-      // >30% means >132 points
-      render(<GameOverOverlay {...defaultProps} score={150} level={1} />);
+      // Level 1 max score is 300
+      // >30% means >90 points
+      render(<GameOverOverlay {...defaultProps} score={100} level={1} />);
       expect(screen.getByTestId('star-1')).toHaveClass('filled');
       expect(screen.getByTestId('star-2')).not.toHaveClass('filled');
       expect(screen.getByTestId('star-3')).not.toHaveClass('filled');
     });
 
     it('shows 2 stars for score >60% of max', () => {
-      // Level 1 max score is 440
-      // >60% means >264 points
-      render(<GameOverOverlay {...defaultProps} score={280} level={1} />);
+      // Level 1 max score is 300
+      // >60% means >180 points
+      render(<GameOverOverlay {...defaultProps} score={200} level={1} />);
       expect(screen.getByTestId('star-1')).toHaveClass('filled');
       expect(screen.getByTestId('star-2')).toHaveClass('filled');
       expect(screen.getByTestId('star-3')).not.toHaveClass('filled');
     });
 
     it('shows 3 stars for score >90% of max', () => {
-      // Level 1 max score is 440
-      // >90% means >396 points
-      render(<GameOverOverlay {...defaultProps} score={400} level={1} />);
+      // Level 1 max score is 300
+      // >90% means >270 points
+      render(<GameOverOverlay {...defaultProps} score={280} level={1} />);
       expect(screen.getByTestId('star-1')).toHaveClass('filled');
       expect(screen.getByTestId('star-2')).toHaveClass('filled');
       expect(screen.getByTestId('star-3')).toHaveClass('filled');

@@ -1,36 +1,16 @@
-<<<<<<< HEAD
-=== US-014: Particle effects system ===
-COMPLETED: 2026-03-07T22:25:00+03:00
-FILES CHANGED: 
-- src/types/game.ts (added Particle interface, MAX_PARTICLES, PARTICLE_LIFETIME to GAME_CONFIG)
-- src/components/ParticleSystem.tsx (new - ParticleSystem class and hook)
-- src/hooks/useGame.ts (integrated ParticleSystem, added particle spawning on brick destruction and power-up collection)
-KEY DECISIONS:
-- Used class-based ParticleSystem with useMemo for React integration (avoids ref access during render issues)
-- Three particle effect types: shatter (brick destruction), sparkle (power-up collection), trail (ball movement)
-- Particle colors match source entity (brick color for bricks, power-up color for power-ups)
-- Efficient cleanup via filter after lifetime expires
-- Max 200 particles enforced via spawn count limiting
-DEPENDENCIES ADDED: none
-=======
-=== US-020: Game Over / Victory screen ===
-COMPLETED: 2026-03-07T22:43:00+03:00
-FILES_CHANGED:
-- src/components/GameOverOverlay.tsx (enhanced with star rating)
-- src/components/VictoryOverlay.tsx (enhanced with star rating and lives bonus)
-- src/components/GameCanvas.tsx (updated props for overlays)
-- src/components/GameOverOverlay.test.tsx (new test file)
-- src/components/VictoryOverlay.test.tsx (new test file)
-- src/test/setup.ts (new vitest setup)
-- vitest.config.ts (new vitest config)
-- package.json (added test script and testing libraries)
+=== US-021: Sound effects system ===
+COMPLETED: 2026-03-07T22:45:00+03:00
+FILES_CHANGED: 
+  - src/utils/sound.ts (new)
+  - src/hooks/useGame.ts
+  - src/components/MainMenu.tsx
+  - src/components/HUD.tsx
+  - src/components/GameCanvas.tsx
+  - src/__tests__/sound.test.ts (new)
 KEY_DECISIONS:
-- Star rating thresholds: >30% = 1 star, >60% = 2 stars, >90% = 3 stars of max possible score
-- Lives bonus: 500 points per remaining life added to final score on victory
-- Max score calculated per level based on brick patterns in types/game.ts
-- Play Again restarts at current level for Game Over, level 1 for Victory
-- Used data-testid attributes for reliable test selectors
-DEPENDENCIES_ADDED:
-- @testing-library/react, @testing-library/jest-dom, @testing-library/user-event
-- vitest, jsdom, @vitejs/plugin-react
->>>>>>> origin/feature/initial-game
+  - Used Web Audio API for synthesized sounds (no external audio files needed)
+  - Implemented singleton pattern for sound manager to maintain state across components
+  - Brick hit pitch correlates with durability level (200Hz/400Hz/600Hz)
+  - Mute toggle persists during session via React state
+  - Sound triggers integrated directly into game loop for immediate feedback
+DEPENDENCIES_ADDED: None (uses native Web Audio API)

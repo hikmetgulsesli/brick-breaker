@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useGame } from '@/hooks/useGame';
 import { useGameRenderer } from '@/hooks/useGameRenderer';
 import { MainMenu } from '@/components/MainMenu';
@@ -8,6 +8,8 @@ import { PauseOverlay } from '@/components/PauseOverlay';
 import { GameOverOverlay } from '@/components/GameOverOverlay';
 import { VictoryOverlay } from '@/components/VictoryOverlay';
 import { HUD } from '@/components/HUD';
+import { AccessibilitySettings } from '@/components/AccessibilitySettings';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 import { GAME_CONFIG } from '@/types/game';
 
 export const GameCanvas = () => {
@@ -31,6 +33,8 @@ export const GameCanvas = () => {
     toggleMute,
   } = useGame();
   
+  const [isTouching, setIsTouching] = useState(false);
+  
   useGameRenderer({
     canvasRef,
     paddle,
@@ -41,23 +45,45 @@ export const GameCanvas = () => {
     activePowerUp,
   });
   
-  // Handle mouse/touch movement
+  // Handle mouse movement
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    updatePaddlePosition(e.clientX);
-  }, [updatePaddlePosition]);
-  
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length > 0) {
-      updatePaddlePosition(e.touches[0].clientX);
+    if (gameState === 'playing' || gameState === 'paused') {
+      updatePaddlePosition(e.clientX);
     }
-  }, [updatePaddlePosition]);
+  }, [gameState, updatePaddlePosition]);
   
+  // Handle touch start - iOS Safari optimization
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (gameState !== 'playing' && gameState !== 'paused') return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    setIsTouching(true);
+    updatePaddlePosition(touch.clientX);
+  }, [gameState, updatePaddlePosition]);
+  
+  // Handle touch move - iOS Safari optimization
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (gameState !== 'playing' && gameState !== 'paused') return;
+    if (!isTouching) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    updatePaddlePosition(touch.clientX);
+  }, [gameState, isTouching, updatePaddlePosition]);
+  
+  // Handle touch end
+  const handleTouchEnd = useCallback(() => {
+    setIsTouching(false);
+  }, []);
+  
+  // Handle click/tap to shoot lasers
   const handleClick = useCallback(() => {
     if (gameState === 'playing' && activePowerUp === 'laser') {
       shootLaser();
     }
   }, [gameState, activePowerUp, shootLaser]);
-  
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -66,6 +92,7 @@ export const GameCanvas = () => {
         case 'p':
         case 'P':
           if (gameState === 'playing' || gameState === 'paused') {
+            e.preventDefault();
             togglePause();
           }
           break;
@@ -75,15 +102,68 @@ export const GameCanvas = () => {
             shootLaser();
           }
           break;
+        case 'm':
+        case 'M':
+          // Quick mute toggle
+          toggleMute();
+          break;
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, togglePause, activePowerUp, shootLaser]);
+  }, [gameState, togglePause, activePowerUp, shootLaser, toggleMute]);
+  
+  // iOS Safari: Prevent default touch behaviors that interfere with game
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const preventDefault = (e: TouchEvent) => {
+      // Only prevent default during gameplay
+      if (gameState === 'playing' || gameState === 'paused') {
+        // Allow scrolling if touching outside the canvas
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        if (touch) {
+          const isInsideCanvas = 
+            touch.clientX >= rect.left && 
+            touch.clientX <= rect.right && 
+            touch.clientY >= rect.top && 
+            touch.clientY <= rect.bottom;
+          
+          if (isInsideCanvas) {
+            e.preventDefault();
+          }
+        }
+      }
+    };
+    
+    // Prevent zoom on double-tap
+    let lastTouchEnd = 0;
+    const preventDoubleTapZoom = (e: TouchEvent) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    };
+    
+    canvas.addEventListener('touchstart', preventDefault, { passive: false });
+    canvas.addEventListener('touchmove', preventDefault, { passive: false });
+    document.addEventListener('touchend', preventDoubleTapZoom, { passive: false });
+    
+    return () => {
+      canvas.removeEventListener('touchstart', preventDefault);
+      canvas.removeEventListener('touchmove', preventDefault);
+      document.removeEventListener('touchend', preventDoubleTapZoom);
+    };
+  }, [canvasRef, gameState]);
   
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: 'var(--bg-dark)' }}>
+      <ServiceWorkerRegistration />
+      
       <div className="game-container">
         {/* HUD */}
         {(gameState === 'playing' || gameState === 'paused') && (
@@ -104,8 +184,16 @@ export const GameCanvas = () => {
           height={GAME_CONFIG.CANVAS_HEIGHT}
           className="game-canvas"
           onMouseMove={handleMouseMove}
-          onTouchMove={handleTouchMove}
           onClick={handleClick}
+          // iOS Safari touch events
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          // Accessibility
+          role="img"
+          aria-label="Game canvas - Use mouse, touch, or keyboard to play"
+          tabIndex={gameState === 'playing' || gameState === 'paused' ? 0 : -1}
         />
         
         {/* Screens */}
@@ -146,8 +234,21 @@ export const GameCanvas = () => {
       </div>
       
       {/* Instructions */}
-      <div className="mt-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-        <p>Mouse/Touch: Move paddle | Click/Space: Shoot lasers | ESC/P: Pause</p>
+      <div 
+        className="mt-4 text-center text-sm max-w-md" 
+        style={{ color: 'var(--text-muted)' }}
+        aria-live="polite"
+      >
+        <p>
+          <span className="hidden sm:inline">Mouse/Touch: Move paddle | </span>
+          <span className="sm:hidden">Touch &amp; drag: Move paddle | </span>
+          Click/Space: Shoot lasers | ESC/P: Pause | M: Mute
+        </p>
+      </div>
+      
+      {/* Accessibility Settings */}
+      <div style={{ position: 'fixed', bottom: '1rem', right: '1rem', zIndex: 100 }}>
+        <AccessibilitySettings />
       </div>
     </div>
   );
