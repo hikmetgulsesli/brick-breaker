@@ -7,9 +7,10 @@ interface VictoryOverlayProps {
   lives: number;
   onRestart: () => void;
   onMenu: () => void;
+  isLastLevel?: boolean;
 }
 
-export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverlayProps) => {
+export const VictoryOverlay = ({ score, lives, onRestart, onMenu, isLastLevel }: VictoryOverlayProps) => {
   const maxScore = calculateTotalMaxScore();
   const livesBonus = calculateLivesBonus(lives);
   const finalScore = score + livesBonus;
@@ -64,7 +65,7 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
       </div>
       
       <p className="screen-subtitle" data-testid="completion-text">
-        All levels completed!
+        {isLastLevel ? 'All levels completed!' : 'Level completed!'}
       </p>
       
       <div className="menu-buttons">
@@ -73,7 +74,7 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
           onClick={onRestart}
           data-testid="play-again-button"
         >
-          PLAY AGAIN
+          {isLastLevel ? 'Play Again' : 'Next Level'}
         </button>
         <button 
           className="menu-button menu-button-secondary"
