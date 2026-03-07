@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore, useMemo } from 'react';
 
 interface AccessibilitySettings {
   reducedMotion: boolean;
@@ -27,6 +27,18 @@ const getSnapshot = (): string | null => {
 };
 
 const getServerSnapshot = (): null => null;
+
+// Parse settings from localStorage value
+const parseSettings = (stored: string | null, fallback: AccessibilitySettings): AccessibilitySettings => {
+  if (stored) {
+    try {
+      return JSON.parse(stored) as AccessibilitySettings;
+    } catch {
+      // Fall through to fallback
+    }
+  }
+  return fallback;
+};
 
 // Get initial settings from localStorage or system preferences
 const getInitialSettings = (): AccessibilitySettings => {
@@ -57,19 +69,20 @@ export const AccessibilitySettings = () => {
   const [settings, setSettings] = useState<AccessibilitySettings>(getInitialSettings);
   const [isVisible, setIsVisible] = useState(false);
   
-  // Sync with localStorage changes from other tabs
-  const storedSettings = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  // Sync with localStorage changes from other tabs - use useSyncExternalStore result to compute settings
+  const storedSettingsRaw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   
+  // Use a ref to track if we need to sync from storage (only on changes, not initial)
+  const [lastSyncedRaw, setLastSyncedRaw] = useState<string | null>(storedSettingsRaw);
+  
+  // Handle external storage changes without calling setState directly in render
   useEffect(() => {
-    if (storedSettings) {
-      try {
-        const parsed = JSON.parse(storedSettings) as AccessibilitySettings;
-        setSettings(parsed);
-      } catch {
-        // Ignore parsing errors
-      }
+    if (storedSettingsRaw !== lastSyncedRaw) {
+      setLastSyncedRaw(storedSettingsRaw);
+      const parsed = parseSettings(storedSettingsRaw, settings);
+      setSettings(parsed);
     }
-  }, [storedSettings]);
+  }, [storedSettingsRaw, lastSyncedRaw, settings]);
 
   // Apply settings to document
   useEffect(() => {
