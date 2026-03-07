@@ -184,10 +184,10 @@ export default function BrickBreakerPage() {
     >
       {/* HUD - Always visible during gameplay */}
       <HUD
-        gameState={gameState.state}
         lives={gameState.lives}
         score={gameState.score}
         level={gameState.level}
+        activePowerUp={null}
       />
 
       {/* Game Canvas */}

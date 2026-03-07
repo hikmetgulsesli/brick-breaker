@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import type { Ball, Paddle, Brick, PowerUp, Laser, PowerUpType } from '@/types/game';
 import { GAME_CONFIG, BRICK_COLORS, POWERUP_COLORS, COLORS } from '@/types/game';
 
@@ -23,7 +23,10 @@ export const useGameRenderer = ({
   lasers,
   activePowerUp,
 }: UseGameRendererProps) => {
+  const timeRef = useRef(0);
+  
   const draw = useCallback(() => {
+    timeRef.current += 1;
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -146,44 +149,88 @@ export const useGameRenderer = ({
       if (!powerUp.active) return;
       
       const color = POWERUP_COLORS[powerUp.type];
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 15;
       
-      // Power-up body
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(
-        powerUp.x + powerUp.width / 2,
-        powerUp.y + powerUp.height / 2,
-        powerUp.width / 2,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-      
-      // Power-up icon
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      const iconX = powerUp.x + powerUp.width / 2;
-      const iconY = powerUp.y + powerUp.height / 2;
-      
-      switch (powerUp.type) {
-        case 'wide':
-          ctx.fillRect(iconX - 6, iconY - 2, 12, 4);
-          break;
-        case 'multiball':
-          ctx.beginPath();
-          ctx.arc(iconX - 3, iconY, 2, 0, Math.PI * 2);
-          ctx.arc(iconX + 3, iconY, 2, 0, Math.PI * 2);
-          ctx.fill();
-          break;
-        case 'laser':
-          ctx.fillRect(iconX - 1, iconY - 4, 2, 8);
-          break;
+      // Special pulsing glow for multiball
+      if (powerUp.type === 'multiball') {
+        const pulseScale = 1 + Math.sin(timeRef.current * 0.1) * 0.15;
+        const swayOffset = Math.sin(timeRef.current * 0.05) * 3;
+        
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 20 * pulseScale;
+        
+        // Power-up body with pulse and sway
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(
+          powerUp.x + powerUp.width / 2 + swayOffset,
+          powerUp.y + powerUp.height / 2,
+          (powerUp.width / 2) * pulseScale,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        
+        // Inner glow
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.beginPath();
+        ctx.arc(
+          powerUp.x + powerUp.width / 2 + swayOffset - 2,
+          powerUp.y + powerUp.height / 2 - 2,
+          (powerUp.width / 4) * pulseScale,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        
+        // Power-up icon
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        const iconX = powerUp.x + powerUp.width / 2 + swayOffset;
+        const iconY = powerUp.y + powerUp.height / 2;
+        
+        ctx.beginPath();
+        ctx.arc(iconX - 3, iconY, 2, 0, Math.PI * 2);
+        ctx.arc(iconX + 3, iconY, 2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Standard power-up rendering for wide and laser
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 15;
+        
+        // Power-up body
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(
+          powerUp.x + powerUp.width / 2,
+          powerUp.y + powerUp.height / 2,
+          powerUp.width / 2,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+        
+        // Power-up icon
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        const iconX = powerUp.x + powerUp.width / 2;
+        const iconY = powerUp.y + powerUp.height / 2;
+        
+        switch (powerUp.type) {
+          case 'wide':
+            ctx.fillRect(iconX - 6, iconY - 2, 12, 4);
+            break;
+          case 'laser':
+            ctx.fillRect(iconX - 1, iconY - 4, 2, 8);
+            break;
+        }
       }
     });
     
