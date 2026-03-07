@@ -107,7 +107,7 @@ export const GameCanvas = () => {
         
         {/* Screens */}
         {gameState === 'menu' && (
-          <MainMenu onStart={startGame} highScores={highScores} />
+          <MainMenu onStartGame={() => startGame(1)} onShowHighScores={() => {}} />
         )}
         
         {gameState === 'paused' && (
@@ -130,6 +130,8 @@ export const GameCanvas = () => {
         {gameState === 'victory' && (
           <VictoryOverlay 
             score={stats.score}
+            lives={stats.lives}
+            level={stats.level}
             onRestart={() => startGame(1)}
             onMenu={returnToMenu}
           />

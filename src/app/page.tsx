@@ -99,24 +99,7 @@ export default function Home() {
       case 'game':
         return (
           <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
-            <GameCanvas
-              onGameOver={handleGameOver}
-              onVictory={handleVictory}
-              onPause={handlePause}
-              isPaused={isPaused}
-              score={score}
-              setScore={setScore}
-              level={level}
-              lives={lives}
-              setLives={setLives}
-            />
-            {isPaused && (
-              <PauseOverlay
-                onResume={handleResume}
-                onRestart={handleRestart}
-                onMenu={showMenu}
-              />
-            )}
+            <GameCanvas />
           </div>
         );
 
