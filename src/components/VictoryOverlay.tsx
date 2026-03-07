@@ -53,7 +53,13 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
   const stars = calculateStars(finalScore, maxScore);
   
   return (
-    <div className="screen-overlay animate-fade-in" data-testid="victory-overlay">
+    <div 
+      className="screen-overlay animate-fade-in" 
+      data-testid="victory-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Victory! All levels completed"
+    >
       <h2 
         className="screen-title" 
         style={{ 
@@ -67,7 +73,12 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
       </h2>
       
       {/* Star Rating */}
-      <div className="star-rating" data-testid="star-rating">
+      <div 
+        className="star-rating" 
+        data-testid="star-rating"
+        role="img"
+        aria-label={`${stars} out of 3 stars earned`}
+      >
         {[1, 2, 3].map(star => (
           <svg
             key={star}
@@ -75,6 +86,7 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
             viewBox="0 0 24 24"
             fill="currentColor"
             data-testid={`star-${star}`}
+            aria-hidden="true"
           >
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
@@ -82,7 +94,12 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
       </div>
       
       {/* Base Score */}
-      <div className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }} data-testid="base-score">
+      <div 
+        className="text-sm mb-1" 
+        style={{ color: 'var(--text-secondary)' }} 
+        data-testid="base-score"
+        aria-label={`Base score: ${score.toLocaleString()}`}
+      >
         Base Score: {score.toLocaleString()}
       </div>
       
@@ -91,12 +108,18 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
         className="text-sm mb-2" 
         style={{ color: 'var(--neon-green)' }} 
         data-testid="lives-bonus"
+        aria-label={`Lives bonus: ${livesBonus.toLocaleString()} points`}
       >
         Lives Bonus: +{livesBonus.toLocaleString()} ({lives} × 500)
       </div>
       
       {/* Final Score */}
-      <div className="score-display" style={{ color: 'var(--neon-green)' }} data-testid="final-score">
+      <div 
+        className="score-display" 
+        style={{ color: 'var(--neon-green)' }} 
+        data-testid="final-score"
+        aria-label={`Final score: ${finalScore.toLocaleString()}`}
+      >
         {finalScore.toLocaleString()}
       </div>
       
@@ -109,6 +132,7 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
           className="menu-button menu-button-primary"
           onClick={onRestart}
           data-testid="play-again-button"
+          aria-label="Play again from level 1"
         >
           PLAY AGAIN
         </button>
@@ -116,6 +140,7 @@ export const VictoryOverlay = ({ score, lives, onRestart, onMenu }: VictoryOverl
           className="menu-button menu-button-secondary"
           onClick={onMenu}
           data-testid="main-menu-button"
+          aria-label="Return to main menu"
         >
           MAIN MENU
         </button>
