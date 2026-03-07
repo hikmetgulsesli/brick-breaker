@@ -1,5 +1,12 @@
 STATUS: done
+<<<<<<< HEAD
 STORY_BRANCH: 8fad9b28-US-020
 PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/19
 CHANGES: Enhanced GameOverOverlay and VictoryOverlay components with star rating system (1-3 stars based on score thresholds: >30%, >60%, >90% of max possible score). Added lives bonus calculation (500 points per remaining life) to VictoryOverlay. Updated button labels to PLAY AGAIN and MAIN MENU. Play Again restarts at current level for Game Over. Added fade-in animations. Created comprehensive test suites with 24 tests total.
 TESTS: GameOverOverlay tests (12): title render, score display, star rating at all thresholds (0, 1, 2, 3 stars), level info, PLAY AGAIN and MAIN MENU button functionality, fade animation. VictoryOverlay tests (12): title render, base score, lives bonus calculation, final score with bonus, star rating, completion message, button functionality, fade animation. All 24 tests passing.
+=======
+STORY_BRANCH: 8fad9b28-US-013
+PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/15
+CHANGES: Implemented Laser power-up system with 8 second duration, spacebar/click firing, laser sound effect, red targeting orb (#ff073a) with sway animation, and HUD timer display. Updated useGame.ts with powerUpTimeRemaining state and playLaserSound function. Updated HUD.tsx to show countdown timer. Updated useGameRenderer.ts with sway/pulse animation for laser power-up. Added vitest config and 6 laser power-up tests.
+TESTS: Created 6 comprehensive tests for laser power-up in src/hooks/__tests__/useGame.laser.test.tsx covering: duration config, color constants, GAME_CONFIG values, time remaining tracking, shoot laser behavior, and laser config values. All tests pass.
+>>>>>>> origin/feature/initial-game
