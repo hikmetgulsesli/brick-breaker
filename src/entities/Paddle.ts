@@ -37,20 +37,6 @@ export interface PaddleConfig {
   glowBlur: number;
   /** Wide paddle glow blur radius */
   wideGlowBlur: number;
-  /** Laser width in pixels */
-  laserWidth: number;
-  /** Laser height in pixels */
-  laserHeight: number;
-  /** Laser glow blur radius */
-  laserGlowBlur: number;
-  /** Laser color (hex) */
-  laserColor: string;
-  /** Laser fill color (hex) */
-  laserFillColor: string;
-  /** Laser offset from paddle edge */
-  laserOffset: number;
-  /** Laser vertical offset from paddle top */
-  laserVerticalOffset: number;
 }
 
 export const DEFAULT_PADDLE_CONFIG: PaddleConfig = {
@@ -62,13 +48,6 @@ export const DEFAULT_PADDLE_CONFIG: PaddleConfig = {
   wideGlowColor: '#ff00ff',
   glowBlur: 10,
   wideGlowBlur: 15,
-  laserWidth: 4,
-  laserHeight: 8,
-  laserGlowBlur: 8,
-  laserColor: '#ff0000',
-  laserFillColor: '#ff3333',
-  laserOffset: 5,
-  laserVerticalOffset: 2,
 };
 
 export class Paddle {
@@ -318,18 +297,22 @@ export class Paddle {
     y: number,
     halfWidth: number
   ): void {
-    const { laserWidth, laserHeight, laserGlowBlur, laserColor, laserFillColor, laserOffset, laserVerticalOffset } = this.config;
-
+    // Laser indicator constants
+    const LASER_WIDTH = 4;
+    const LASER_HEIGHT = 8;
+    const LASER_OFFSET_X = 5; // Distance from paddle edge
+    const LASER_Y_OFFSET = 2; // Slight offset from paddle top
+    
     ctx.save();
-    ctx.shadowColor = laserColor;
-    ctx.shadowBlur = laserGlowBlur;
-    ctx.fillStyle = laserFillColor;
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#ff3333';
 
     // Left laser
-    ctx.fillRect(centerX - halfWidth + laserOffset, y - laserHeight + laserVerticalOffset, laserWidth, laserHeight);
-
+    ctx.fillRect(centerX - halfWidth + LASER_OFFSET_X, y - LASER_HEIGHT + LASER_Y_OFFSET, LASER_WIDTH, LASER_HEIGHT);
+    
     // Right laser
-    ctx.fillRect(centerX + halfWidth - laserOffset - laserWidth, y - laserHeight + laserVerticalOffset, laserWidth, laserHeight);
+    ctx.fillRect(centerX + halfWidth - LASER_OFFSET_X - LASER_WIDTH, y - LASER_HEIGHT + LASER_Y_OFFSET, LASER_WIDTH, LASER_HEIGHT);
 
     ctx.restore();
   }

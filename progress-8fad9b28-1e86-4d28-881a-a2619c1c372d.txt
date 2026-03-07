@@ -27,3 +27,42 @@ KEY_DECISIONS:
   - All event listeners properly cleaned up on unmount
 DEPENDENCIES_ADDED: none
 PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/6
+
+=== US-005: Paddle entity and rendering ===
+COMPLETED: 2025-03-07T20:35:00+03:00
+FILES_CHANGED:
+  - src/entities/Paddle.ts (new)
+  - src/entities/Paddle.test.ts (new)
+  - src/entities/index.ts (new)
+  - src/components/Paddle.tsx (new)
+  - src/components/index.ts (new)
+KEY_DECISIONS:
+  - Paddle entity uses normalized X position (0-1) for resolution independence
+  - Canvas-based rendering for optimal performance with glow effects
+  - Imperative ref API allows parent components to control paddle state
+  - Rounded paddle corners for better aesthetics
+  - Gradient fill with highlight for 3D appearance
+  - Wide paddle uses magenta glow to distinguish from normal blue glow
+  - Separate laser indicators rendered above paddle when power-up active
+DEPENDENCIES_ADDED: none
+PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/7
+
+=== US-006: Ball physics engine ===
+COMPLETED: 2025-03-07T20:36:00+03:00
+FILES_CHANGED:
+  - src/entities/Ball.ts (new)
+  - src/entities/Ball.test.ts (new)
+  - src/entities/index.ts (updated)
+  - src/components/Ball.tsx (new)
+  - src/components/index.ts (updated)
+KEY_DECISIONS:
+  - Ball uses velocity-based movement (velocityX, velocityY) for smooth frame-rate independent motion
+  - Paddle angle physics calculated using hit position ratio (-1 to 1) mapped to max 70° angle
+  - Speed caps enforced with min 4px/frame and max 12px/frame limits
+  - Gradual 2% speed increase every 10 seconds implemented via performance.now() timing
+  - Trail effect uses a circular buffer of positions with fading opacity
+  - Life lost callback triggered when ball Y position exceeds canvas height + radius
+  - Brick collision detection uses closest-point-on-rectangle algorithm with side detection
+  - Canvas resize maintains proportional ball position via scale factors
+DEPENDENCIES_ADDED: none
+PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/8

@@ -96,38 +96,31 @@ export const PaddleComponent = forwardRef<PaddleComponentRef, PaddleComponentPro
 
       // Render paddle
       paddleRef.current.render(ctx);
-    }, [canvasWidth, canvasHeight, paddleX, paddleType, hasLaser]);
+    });
 
     // Expose imperative handle
-    useImperativeHandle(ref, () => {
-      const defaultWidth = config?.normalWidth ?? 100;
-      const defaultHeight = config?.height ?? 16;
-      const defaultBottomMargin = config?.bottomMargin ?? 20;
-      const defaultY = canvasHeight - defaultBottomMargin - defaultHeight;
-
-      return {
-        getState: () => paddleRef.current?.getState() ?? {
-          x: 0.5,
-          y: defaultY,
-          width: defaultWidth,
-          height: defaultHeight,
-          type: 'normal',
-          hasLaser: false,
-        },
-        getBoundingBox: () => paddleRef.current?.getBoundingBox() ?? {
-          left: (canvasWidth / 2) - (defaultWidth / 2),
-          right: (canvasWidth / 2) + (defaultWidth / 2),
-          top: defaultY,
-          bottom: defaultY + defaultHeight,
-        },
-        containsPoint: (x: number, y: number) =>
-          paddleRef.current?.containsPoint(x, y) ?? false,
-        activateWide: () => paddleRef.current?.activateWide(),
-        deactivateWide: () => paddleRef.current?.deactivateWide(),
-        setLaser: (enabled: boolean) => paddleRef.current?.setLaser(enabled),
-        reset: () => paddleRef.current?.reset(),
-      };
-    }, [canvasWidth, canvasHeight, config]);
+    useImperativeHandle(ref, () => ({
+      getState: () => paddleRef.current?.getState() ?? {
+        x: 0.5,
+        y: canvasHeight - (config?.bottomMargin ?? 20) - (config?.height ?? 16),
+        width: config?.normalWidth ?? 100,
+        height: config?.height ?? 16,
+        type: 'normal',
+        hasLaser: false,
+      },
+      getBoundingBox: () => paddleRef.current?.getBoundingBox() ?? {
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+      },
+      containsPoint: (x: number, y: number) =>
+        paddleRef.current?.containsPoint(x, y) ?? false,
+      activateWide: () => paddleRef.current?.activateWide(),
+      deactivateWide: () => paddleRef.current?.deactivateWide(),
+      setLaser: (enabled: boolean) => paddleRef.current?.setLaser(enabled),
+      reset: () => paddleRef.current?.reset(),
+    }), [canvasHeight, config]);
 
     return (
       <canvas
