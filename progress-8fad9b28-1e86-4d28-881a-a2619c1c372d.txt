@@ -1,0 +1,32 @@
+
+=== US-009: Life system and game state management ===
+COMPLETED: 2026-03-07T21:30:00+03:00
+FILES_CHANGED:
+  - src/lib/gameState.ts (new)
+  - src/lib/gameReducer.ts (new)
+  - src/lib/__tests__/gameState.test.ts (new)
+  - src/components/HUD.tsx (new)
+  - src/components/GameOverlay.tsx (new)
+  - src/components/MainMenu.tsx (new)
+  - src/components/GameCanvas.tsx (new)
+  - src/components/index.ts (new)
+  - src/entities/types.ts (new)
+  - src/entities/Brick.ts (new)
+  - src/entities/levels.ts (new)
+  - src/entities/index.ts (new)
+  - src/lib/collision.ts (new)
+  - src/app/page.tsx
+  - src/app/globals.css
+  - src/app/layout.tsx
+KEY_DECISIONS:
+  - Used immutable reducer pattern for game state management
+  - Life system with 3 starting lives, max 5 lives
+  - Game states: MENU, PLAYING, PAUSED, GAME_OVER, VICTORY
+  - Neon heart icons with pulse animation for lives display
+  - localStorage persistence for high score and unlocked levels
+  - GameCanvas uses refs for game loop to avoid closure issues
+  - Keyboard controls: P to pause, ESC for menu
+DEPENDENCIES_ADDED: none
+PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/12
+
+=== Story US-009 Complete ===

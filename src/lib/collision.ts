@@ -336,7 +336,6 @@ export function checkSubFrameCollision(
   };
 
   // Ray from ball start to end
-  const rayStart = ballStart;
   const rayDelta = subtract(ballEnd, ballStart);
 
   // Check if already overlapping
