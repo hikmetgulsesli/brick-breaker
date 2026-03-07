@@ -101,6 +101,7 @@ export class ParticleSystem {
         lifetime,
         maxLifetime: lifetime,
         active: true,
+        type,
       });
     }
   }
@@ -134,38 +135,36 @@ export class ParticleSystem {
    * @param deltaTime - Time since last frame in ms
    */
   updateParticles(deltaTime: number = 16): void {
-    this.particles = this.particles
-      .map(particle => {
-        if (!particle.active) return particle;
+    const aliveParticles: Particle[] = [];
+    for (const particle of this.particles) {
+      if (!particle.active) continue;
 
-        // Update position
-        const newX = particle.x + particle.vx;
-        const newY = particle.y + particle.vy;
+      // Update position
+      const newX = particle.x + particle.vx * (deltaTime / 16);
+      const newY = particle.y + particle.vy * (deltaTime / 16);
 
-        // Apply gravity (stronger for shatter particles)
-        const newVy = particle.vy + 0.15;
+      // Apply gravity (scale with deltaTime for frame-rate independence)
+      const gravity = particle.type === 'shatter' ? 0.25 : 0.15;
+      const newVy = particle.vy + gravity * (deltaTime / 16);
 
-        // Update lifetime
-        const newLifetime = particle.lifetime - deltaTime;
+      // Update lifetime
+      const newLifetime = particle.lifetime - deltaTime;
 
-        // Calculate alpha based on remaining lifetime (fade out)
-        const newAlpha = Math.max(0, newLifetime / particle.maxLifetime);
+      // Calculate alpha based on remaining lifetime (fade out)
+      const newAlpha = Math.max(0, newLifetime / particle.maxLifetime);
 
-        // Check if particle should be deactivated
-        if (newLifetime <= 0 || newAlpha <= 0) {
-          return { ...particle, active: false };
-        }
-
-        return {
+      if (newLifetime > 0 && newAlpha > 0) {
+        aliveParticles.push({
           ...particle,
           x: newX,
           y: newY,
           vy: newVy,
           lifetime: newLifetime,
           alpha: newAlpha,
-        };
-      })
-      .filter(particle => particle.active); // Remove inactive particles
+        });
+      }
+    }
+    this.particles = aliveParticles;
   }
 
   /**
@@ -195,11 +194,8 @@ export class ParticleSystem {
   setMaxParticles(max: number): void {
     this.maxParticles = max;
     // Trim excess particles if needed
-    const activeCount = this.getActiveParticleCount();
-    if (activeCount > max) {
-      this.particles = this.particles.filter(p => !p.active).concat(
-        this.particles.filter(p => p.active).slice(0, max)
-      );
+    if (this.particles.length > max) {
+      this.particles = this.particles.slice(0, max);
     }
   }
 }
@@ -232,6 +228,7 @@ export const useParticleSystemClass = (): ParticleSystemAPI => {
 
   const spawnBallTrail = useCallback((x: number, y: number, color: string) => {
     system.spawnBallTrail(x, y, color);
+    setTick(t => t + 1);
   }, [system]);
 
   const updateParticles = useCallback((deltaTime: number) => {

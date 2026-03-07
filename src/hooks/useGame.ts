@@ -125,6 +125,18 @@ export const useGame = () => {
   // Particle system - useMemo to create instance once
   const particleSystem = useMemo(() => new ParticleSystem(GAME_CONFIG.MAX_PARTICLES), []);
   
+  // Helper to spawn brick destruction particles
+  const spawnBrickShatterEffect = useCallback((brick: Brick) => {
+    const particleCount = Math.floor(Math.random() * 5) + 8;
+    particleSystem.spawnParticles(
+      brick.x + brick.width / 2,
+      brick.y + brick.height / 2,
+      brick.color,
+      particleCount,
+      'shatter'
+    );
+  }, [particleSystem]);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const lastShotTime = useRef<number>(0);
@@ -331,8 +343,16 @@ export const useGame = () => {
       return;
     }
     
-    const gameLoop = () => {
+    let lastFrameTime = 0;
+    const gameLoop = (currentTime: number) => {
       frameCountRef.current++;
+      
+      // Calculate dynamic deltaTime for frame-rate independent physics
+      if (lastFrameTime === 0) {
+        lastFrameTime = currentTime;
+      }
+      const deltaTime = currentTime - lastFrameTime;
+      lastFrameTime = currentTime;
       
       setBalls(prevBalls => {
         const speed = getSpeedForLevel(stats.level);
@@ -417,15 +437,8 @@ export const useGame = () => {
             ) {
               scoreIncrease += brick.level * 10;
               
-              // Spawn particles for brick destruction (8-12 particles)
-              const particleCount = Math.floor(Math.random() * 5) + 8;
-              particleSystem.spawnParticles(
-                brick.x + brick.width / 2,
-                brick.y + brick.height / 2,
-                brick.color,
-                particleCount,
-                'shatter'
-              );
+              // Spawn particles for brick destruction
+              spawnBrickShatterEffect(brick);
               
               // Bounce ball
               setBalls(prev => prev.map(b => 
@@ -510,15 +523,8 @@ export const useGame = () => {
             ) {
               scoreIncrease += brick.level * 10;
               
-              // Spawn particles for brick destruction (8-12 particles)
-              const particleCount = Math.floor(Math.random() * 5) + 8;
-              particleSystem.spawnParticles(
-                brick.x + brick.width / 2,
-                brick.y + brick.height / 2,
-                brick.color,
-                particleCount,
-                'shatter'
-              );
+              // Spawn particles for brick destruction
+              spawnBrickShatterEffect(brick);
               
               laser.active = false;
               return { ...brick, active: false };
@@ -537,8 +543,8 @@ export const useGame = () => {
         return updatedBricks;
       });
       
-      // Update particles via ParticleSystem
-      particleSystem.updateParticles(16);
+      // Update particles via ParticleSystem with dynamic deltaTime
+      particleSystem.updateParticles(deltaTime);
       
       // Sync particles state for rendering
       setParticles(particleSystem.getParticles());
@@ -553,7 +559,7 @@ export const useGame = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameState, balls, paddle, bricks, lasers, stats.level, stats.score, saveHighScore, spawnPowerUp, applyPowerUp, particleSystem]);
+  }, [gameState, balls, paddle, bricks, lasers, stats.level, stats.score, saveHighScore, spawnPowerUp, applyPowerUp, particleSystem, spawnBrickShatterEffect]);
   
   return {
     gameState,

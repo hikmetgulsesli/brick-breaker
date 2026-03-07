@@ -67,6 +67,7 @@ export interface Particle extends Position {
   lifetime: number;
   maxLifetime: number;
   active: boolean;
+  type?: 'shatter' | 'sparkle' | 'trail';
 }
 
 export interface GameStats {
