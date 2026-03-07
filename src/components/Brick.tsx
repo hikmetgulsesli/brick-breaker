@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle, useState, useCallback } from 'react';
 import Brick, { BrickConfig, BrickState, BrickHitResult } from '../entities/Brick';
 
 export interface BrickComponentProps {
@@ -65,6 +65,7 @@ export const BrickComponent = forwardRef<BrickComponentRef, BrickComponentProps>
   ) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const brickRef = useRef<Brick | null>(null);
+    const [renderVersion, setRenderVersion] = useState(0);
 
     // Initialize brick instance
     useEffect(() => {
@@ -89,7 +90,12 @@ export const BrickComponent = forwardRef<BrickComponentRef, BrickComponentProps>
 
       // Render brick
       brickRef.current.render(ctx);
-    });
+    }, [canvasWidth, canvasHeight, renderVersion]);
+
+    // Trigger re-render when brick state changes
+    const triggerRender = useCallback(() => {
+      setRenderVersion(v => v + 1);
+    }, []);
 
     // Expose imperative handle
     useImperativeHandle(ref, () => ({
@@ -112,24 +118,34 @@ export const BrickComponent = forwardRef<BrickComponentRef, BrickComponentProps>
         },
       containsPoint: (px: number, py: number) =>
         brickRef.current?.containsPoint(px, py) ?? false,
-      hit: () =>
-        brickRef.current?.hit() ?? {
+      hit: () => {
+        const result = brickRef.current?.hit() ?? {
           destroyed: false,
           points: 0,
           remainingDurability: 0,
-        },
+        };
+        triggerRender();
+        return result;
+      },
       getDurability: () => brickRef.current?.getDurability() ?? 0,
       isActive: () => brickRef.current?.isActive() ?? false,
       getScoreValue: () => brickRef.current?.getScoreValue() ?? 0,
-      reset: () => brickRef.current?.reset(),
-      destroy: () => brickRef.current?.destroy() ?? 0,
+      reset: () => {
+        brickRef.current?.reset();
+        triggerRender();
+      },
+      destroy: () => {
+        const points = brickRef.current?.destroy() ?? 0;
+        triggerRender();
+        return points;
+      },
       getColors: () =>
         brickRef.current?.getColors() ?? {
           fill: '#00ff41',
           glow: '#00ff41',
           border: '#00cc33',
         },
-    }), [x, y, durability, isActive]);
+    }), [x, y, durability, isActive, triggerRender]);
 
     return (
       <canvas

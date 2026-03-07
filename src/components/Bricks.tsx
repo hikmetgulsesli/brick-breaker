@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle, useState, useCallback } from 'react';
 import Brick from '../entities/Brick';
 import { createBricksForLevel, BrickConfig } from '../entities';
 
@@ -57,27 +57,12 @@ export const BricksComponent = forwardRef<BricksComponentRef, BricksComponentPro
   ) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const bricksRef = useRef<Brick[]>([]);
+    const [renderVersion, setRenderVersion] = useState(0);
 
     // Initialize bricks for the level
     useEffect(() => {
       try {
-        bricksRef.current = createBricksForLevel(levelNumber, canvasWidth, canvasHeight);
-        
-        // Apply custom config if provided
-        if (config) {
-          bricksRef.current.forEach(brick => {
-            // Recreate brick with custom config if needed
-            const state = brick.getState();
-            if (config.width || config.height) {
-              brick.updateDimensions(
-                config.width ?? state.width,
-                config.height ?? state.height,
-                1,
-                1
-              );
-            }
-          });
-        }
+        bricksRef.current = createBricksForLevel(levelNumber, canvasWidth, canvasHeight, config);
       } catch (error) {
         console.error('Failed to create bricks for level:', error);
         bricksRef.current = [];
@@ -99,7 +84,12 @@ export const BricksComponent = forwardRef<BricksComponentRef, BricksComponentPro
       bricksRef.current.forEach(brick => {
         brick.render(ctx);
       });
-    });
+    }, [canvasWidth, canvasHeight, renderVersion]);
+
+    // Trigger re-render when brick states change
+    const triggerRender = useCallback(() => {
+      setRenderVersion(v => v + 1);
+    }, []);
 
     // Expose imperative handle
     useImperativeHandle(ref, () => ({
@@ -140,6 +130,9 @@ export const BricksComponent = forwardRef<BricksComponentRef, BricksComponentPro
             // Collision detected
             const result = brick.hit();
             
+            // Trigger re-render to show updated brick state
+            triggerRender();
+            
             if (result.destroyed && onBrickDestroyed) {
               onBrickDestroyed(result.points, i);
             }
@@ -162,7 +155,7 @@ export const BricksComponent = forwardRef<BricksComponentRef, BricksComponentPro
       reset: () => {
         bricksRef.current.forEach(brick => brick.reset());
       },
-    }), [onBrickDestroyed, onLevelComplete]);
+    }), [onBrickDestroyed, onLevelComplete, triggerRender]);
 
     return (
       <canvas

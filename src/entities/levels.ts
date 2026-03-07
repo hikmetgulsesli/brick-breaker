@@ -32,7 +32,8 @@ export function calculateBrickPositions(
   canvasWidth: number,
   canvasHeight: number,
   pattern: LevelPattern,
-  brickConfig: BrickConfig = DEFAULT_BRICK_CONFIG
+  brickConfig: BrickConfig = DEFAULT_BRICK_CONFIG,
+  startY: number = 60
 ): Array<{ x: number; y: number; durability: BrickDurability }> {
   const { grid, cols } = pattern;
   const totalBrickWidth = cols * brickConfig.width + (cols - 1) * brickConfig.padding;
@@ -46,7 +47,7 @@ export function calculateBrickPositions(
       if (durability > 0) {
         positions.push({
           x: startX + col * (brickConfig.width + brickConfig.padding),
-          y: 60 + row * (brickConfig.height + brickConfig.padding), // Start 60px from top
+          y: startY + row * (brickConfig.height + brickConfig.padding),
           durability: durability as BrickDurability,
         });
       }
@@ -137,7 +138,8 @@ export const LEVELS: LevelConfig[] = [
 export function createBricksForLevel(
   levelNumber: number,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  config?: Partial<BrickConfig>
 ): Brick[] {
   const levelConfig = LEVELS.find(l => l.levelNumber === levelNumber);
   
@@ -145,12 +147,13 @@ export function createBricksForLevel(
     throw new Error(`Level ${levelNumber} not found`);
   }
 
-  const brickConfig = { ...DEFAULT_BRICK_CONFIG, ...levelConfig.brickConfig };
+  const brickConfig = { ...DEFAULT_BRICK_CONFIG, ...levelConfig.brickConfig, ...config };
   const positions = calculateBrickPositions(
     canvasWidth,
     canvasHeight,
     levelConfig.pattern,
-    brickConfig
+    brickConfig,
+    levelConfig.startY
   );
 
   return positions.map(pos => 
