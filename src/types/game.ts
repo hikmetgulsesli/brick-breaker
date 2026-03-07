@@ -58,6 +58,18 @@ export interface Laser extends Position {
   speed: number;
 }
 
+export interface Particle extends Position {
+  vx: number;
+  vy: number;
+  radius: number;
+  color: string;
+  alpha: number;
+  lifetime: number;
+  maxLifetime: number;
+  active: boolean;
+  type?: 'shatter' | 'sparkle' | 'trail';
+}
+
 export interface GameStats {
   score: number;
   lives: number;
@@ -111,10 +123,13 @@ export interface GameConfig {
   LASER_HEIGHT: number;
   MAX_LIVES: number;
   FPS: number;
+  MAX_PARTICLES: number;
+  PARTICLE_LIFETIME: number;
   // Nested accessors for compatibility
   canvas: { width: number; height: number };
   paddle: { width: number; height: number; wideWidth: number; yOffset: number; speed: number };
   ball: { radius: number; baseSpeed: number; maxSpeed: number };
+  particle: { maxCount: number; lifetime: number };
   brick: { width: number; height: number; gap: number; rows: number; cols: number };
   powerUp: { chance: number; fallSpeed: number; wideDuration: number; laserDuration: number };
   laser: { speed: number; width: number; height: number };
@@ -175,6 +190,8 @@ export const GAME_CONFIG: GameConfig = {
   LASER_HEIGHT: 12,
   MAX_LIVES: 3,
   FPS: 60,
+  MAX_PARTICLES: 200,
+  PARTICLE_LIFETIME: 600,
   // Nested accessors for compatibility with US-002 code
   get canvas() { return { width: this.CANVAS_WIDTH, height: this.CANVAS_HEIGHT }; },
   get paddle() { return { width: this.PADDLE_WIDTH, height: this.PADDLE_HEIGHT, wideWidth: this.PADDLE_WIDTH_WIDE, yOffset: this.PADDLE_Y_OFFSET, speed: this.PADDLE_SPEED }; },
@@ -183,6 +200,7 @@ export const GAME_CONFIG: GameConfig = {
   get powerUp() { return { chance: this.POWERUP_CHANCE, fallSpeed: this.POWERUP_FALL_SPEED, wideDuration: this.WIDE_DURATION, laserDuration: this.LASER_DURATION }; },
   get laser() { return { speed: this.LASER_SPEED, width: this.LASER_WIDTH, height: this.LASER_HEIGHT }; },
   get game() { return { maxLives: this.MAX_LIVES, fps: this.FPS }; },
+  get particle() { return { maxCount: this.MAX_PARTICLES, lifetime: this.PARTICLE_LIFETIME }; },
 } as const;
 
 export const LEVEL_PATTERNS: number[][][] = [
