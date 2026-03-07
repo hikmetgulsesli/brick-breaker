@@ -91,3 +91,43 @@ export function getLevel(levelNumber: number): LevelConfig | undefined {
 export function getBrickCount(level: LevelConfig): number {
   return level.pattern.grid.flat().filter(cell => cell > 0).length;
 }
+
+import { Brick } from './Brick';
+
+/** Create bricks for a level */
+export function createBricksForLevel(
+  levelNumber: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  config?: Partial<ConstructorParameters<typeof Brick>[3]>
+): Brick[] {
+  const level = getLevel(levelNumber);
+  if (!level) return [];
+
+  const { grid } = level.pattern;
+  const bricks: Brick[] = [];
+
+  // Calculate brick dimensions from config or defaults
+  const brickWidth = config?.width ?? 60;
+  const brickHeight = config?.height ?? 24;
+  const padding = 4;
+  const cols = grid[0]?.length ?? 10;
+
+  // Calculate starting X to center the bricks
+  const totalWidth = cols * (brickWidth + padding) - padding;
+  const startX = (canvasWidth - totalWidth) / 2;
+  const startY = 60; // Top margin
+
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[row].length; col++) {
+      const durability = grid[row][col];
+      if (durability > 0) {
+        const x = startX + col * (brickWidth + padding);
+        const y = startY + row * (brickHeight + padding);
+        bricks.push(new Brick(x, y, durability as 1 | 2 | 3, config));
+      }
+    }
+  }
+
+  return bricks;
+}
