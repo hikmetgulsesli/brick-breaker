@@ -80,7 +80,7 @@ export function useGameLoop(
       // Update frame count
       frameCountRef.current++;
 
-      // Calculate FPS every second
+      // Calculate FPS every second - only update state then to avoid excessive re-renders
       if (currentTime - fpsTimeRef.current >= 1000) {
         const fps = frameCountRef.current;
         frameCountRef.current = 0;
@@ -90,13 +90,7 @@ export function useGameLoop(
           ...prev,
           fps,
           deltaTime: clampedDeltaTime,
-          frameCount: prev.frameCount + 1,
-        }));
-      } else {
-        setState(prev => ({
-          ...prev,
-          deltaTime: clampedDeltaTime,
-          frameCount: prev.frameCount + 1,
+          frameCount: prev.frameCount + fps,
         }));
       }
 
