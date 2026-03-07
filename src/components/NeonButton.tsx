@@ -8,7 +8,7 @@
 'use client';
 
 export interface NeonButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
   children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'danger' | 'success';
   disabled?: boolean;

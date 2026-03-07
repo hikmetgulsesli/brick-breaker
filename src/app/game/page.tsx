@@ -174,6 +174,7 @@ function GameContent() {
         {gameState === GameState.VICTORY && (
           <VictoryOverlay 
             score={stats.score}
+            lives={stats.lives}
             onRestart={handleNextLevel}
             onMenu={handleReturnToMenu}
             isLastLevel={validLevel === 3}
