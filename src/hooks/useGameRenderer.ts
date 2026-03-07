@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import type { Ball, Paddle, Brick, PowerUp, Laser, PowerUpType } from '@/types/game';
 import { GAME_CONFIG, BRICK_COLORS, POWERUP_COLORS, COLORS } from '@/types/game';
 
@@ -23,7 +23,18 @@ export const useGameRenderer = ({
   lasers,
   activePowerUp,
 }: UseGameRendererProps) => {
+  const animationTimeRef = useRef<number>(0);
+  const lastFrameTimeRef = useRef<number>(0);
+
   const draw = useCallback(() => {
+    // Update animation time
+    const now = Date.now();
+    if (lastFrameTimeRef.current === 0) {
+      lastFrameTimeRef.current = now;
+    }
+    const deltaTime = now - lastFrameTimeRef.current;
+    lastFrameTimeRef.current = now;
+    animationTimeRef.current += deltaTime;
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -144,33 +155,57 @@ export const useGameRenderer = ({
     // Draw power-ups
     powerUps.forEach(powerUp => {
       if (!powerUp.active) return;
-      
+
       const color = POWERUP_COLORS[powerUp.type];
+
+      // Calculate sway offset for laser power-up
+      let swayOffsetX = 0;
+      let swayOffsetY = 0;
+      let scale = 1;
+      if (powerUp.type === 'laser') {
+        const swayTime = animationTimeRef.current / 500; // Sway every 500ms
+        swayOffsetX = Math.sin(swayTime) * 3; // 3px horizontal sway
+        swayOffsetY = Math.cos(swayTime * 0.7) * 2; // 2px vertical sway
+        // Pulsing scale effect
+        scale = 1 + Math.sin(animationTimeRef.current / 300) * 0.1;
+      }
+
       ctx.shadowColor = color;
-      ctx.shadowBlur = 15;
-      
+      ctx.shadowBlur = powerUp.type === 'laser' ? 20 : 15;
+
       // Power-up body
       ctx.fillStyle = color;
       ctx.beginPath();
+      const centerX = powerUp.x + powerUp.width / 2 + swayOffsetX;
+      const centerY = powerUp.y + powerUp.height / 2 + swayOffsetY;
       ctx.arc(
-        powerUp.x + powerUp.width / 2,
-        powerUp.y + powerUp.height / 2,
-        powerUp.width / 2,
+        centerX,
+        centerY,
+        (powerUp.width / 2) * scale,
         0,
         Math.PI * 2
       );
       ctx.fill();
-      
+
+      // Extra glow ring for laser
+      if (powerUp.type === 'laser') {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, (powerUp.width / 2 + 4) * scale, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 7, 58, 0.4)`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
       // Power-up icon
       ctx.shadowBlur = 0;
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 10px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      
-      const iconX = powerUp.x + powerUp.width / 2;
-      const iconY = powerUp.y + powerUp.height / 2;
-      
+
+      const iconX = centerX;
+      const iconY = centerY;
+
       switch (powerUp.type) {
         case 'wide':
           ctx.fillRect(iconX - 6, iconY - 2, 12, 4);

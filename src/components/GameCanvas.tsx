@@ -20,6 +20,7 @@ export const GameCanvas = () => {
     powerUps,
     lasers,
     activePowerUp,
+    powerUpTimeRemaining,
     highScores,
     canvasRef,
     startGame,
@@ -85,11 +86,12 @@ export const GameCanvas = () => {
       <div className="game-container">
         {/* HUD */}
         {(gameState === 'playing' || gameState === 'paused') && (
-          <HUD 
+          <HUD
             score={stats.score}
             lives={stats.lives}
             level={stats.level}
             activePowerUp={activePowerUp}
+            powerUpTimeRemaining={powerUpTimeRemaining}
           />
         )}
         
