@@ -7,9 +7,10 @@ interface HUDProps {
   lives: LifeState;
   level: LevelState;
   activePowerUp: string | null;
+  powerUpTimeRemaining?: number | null;
 }
 
-export const HUD = ({ score, lives, level, activePowerUp }: HUDProps) => {
+export const HUD = ({ score, lives, level, activePowerUp, powerUpTimeRemaining }: HUDProps) => {
   const getPowerUpLabel = (type: string | null) => {
     switch (type) {
       case 'wide': return 'WIDE';
@@ -20,6 +21,7 @@ export const HUD = ({ score, lives, level, activePowerUp }: HUDProps) => {
   };
 
   const powerUpLabel = getPowerUpLabel(activePowerUp);
+  const formattedTime = powerUpTimeRemaining ? Math.ceil(powerUpTimeRemaining / 1000) : null;
 
   return (
     <div className="hud">
@@ -38,10 +40,10 @@ export const HUD = ({ score, lives, level, activePowerUp }: HUDProps) => {
           <span className="hud-label">Power</span>
           <span className="hud-value" style={{
             color: activePowerUp === 'wide' ? 'var(--neon-cyan)' :
-                   activePowerUp === 'multiball' ? 'var(--neon-orange)' :
+                   activePowerUp === 'multiball' ? 'var(--neon-purple)' :
                    'var(--neon-red)'
           }}>
-            {powerUpLabel}
+            {powerUpLabel}{formattedTime !== null && activePowerUp !== 'multiball' ? ` ${formattedTime}s` : ''}
           </span>
         </div>
       )}

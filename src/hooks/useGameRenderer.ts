@@ -23,10 +23,18 @@ export const useGameRenderer = ({
   lasers,
   activePowerUp,
 }: UseGameRendererProps) => {
-  const timeRef = useRef(0);
-  
+  const animationTimeRef = useRef<number>(0);
+  const lastFrameTimeRef = useRef<number>(0);
+
   const draw = useCallback(() => {
-    timeRef.current += 1;
+    // Update animation time
+    const now = Date.now();
+    if (lastFrameTimeRef.current === 0) {
+      lastFrameTimeRef.current = now;
+    }
+    const deltaTime = now - lastFrameTimeRef.current;
+    lastFrameTimeRef.current = now;
+    animationTimeRef.current += deltaTime;
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -147,13 +155,13 @@ export const useGameRenderer = ({
     // Draw power-ups
     powerUps.forEach(powerUp => {
       if (!powerUp.active) return;
-      
+
       const color = POWERUP_COLORS[powerUp.type];
       
       // Special pulsing glow for multiball
       if (powerUp.type === 'multiball') {
-        const pulseScale = 1 + Math.sin(timeRef.current * 0.1) * 0.15;
-        const swayOffset = Math.sin(timeRef.current * 0.05) * 3;
+        const pulseScale = 1 + Math.sin(animationTimeRef.current * 0.1) * 0.15;
+        const swayOffset = Math.sin(animationTimeRef.current * 0.05) * 3;
         
         ctx.shadowColor = color;
         ctx.shadowBlur = 20 * pulseScale;
@@ -196,8 +204,48 @@ export const useGameRenderer = ({
         ctx.arc(iconX - 3, iconY, 2, 0, Math.PI * 2);
         ctx.arc(iconX + 3, iconY, 2, 0, Math.PI * 2);
         ctx.fill();
+      } else if (powerUp.type === 'laser') {
+        // Calculate sway offset for laser power-up
+        const swayTime = animationTimeRef.current / 500; // Sway every 500ms
+        const swayOffsetX = Math.sin(swayTime) * 3; // 3px horizontal sway
+        const swayOffsetY = Math.cos(swayTime * 0.7) * 2; // 2px vertical sway
+        // Pulsing scale effect
+        const scale = 1 + Math.sin(animationTimeRef.current / 300) * 0.1;
+
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 20;
+
+        // Power-up body
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        const centerX = powerUp.x + powerUp.width / 2 + swayOffsetX;
+        const centerY = powerUp.y + powerUp.height / 2 + swayOffsetY;
+        ctx.arc(
+          centerX,
+          centerY,
+          (powerUp.width / 2) * scale,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        // Extra glow ring for laser
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, (powerUp.width / 2 + 4) * scale, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 7, 58, 0.4)`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Power-up icon
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        ctx.fillRect(centerX - 1, centerY - 4, 2, 8);
       } else {
-        // Standard power-up rendering for wide and laser
+        // Standard power-up rendering for wide
         ctx.shadowColor = color;
         ctx.shadowBlur = 15;
         
@@ -223,14 +271,7 @@ export const useGameRenderer = ({
         const iconX = powerUp.x + powerUp.width / 2;
         const iconY = powerUp.y + powerUp.height / 2;
         
-        switch (powerUp.type) {
-          case 'wide':
-            ctx.fillRect(iconX - 6, iconY - 2, 12, 4);
-            break;
-          case 'laser':
-            ctx.fillRect(iconX - 1, iconY - 4, 2, 8);
-            break;
-        }
+        ctx.fillRect(iconX - 6, iconY - 2, 12, 4);
       }
     });
     
