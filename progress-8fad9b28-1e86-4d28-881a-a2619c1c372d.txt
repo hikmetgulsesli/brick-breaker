@@ -10,3 +10,20 @@ KEY_DECISIONS:
   - Used imperative ref API for GameCanvas to allow parent components direct canvas access
 DEPENDENCIES_ADDED: none
 PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/4
+
+=== US-004: Input handling - mouse and touch controls ===
+COMPLETED: 2025-03-07T20:26:00+03:00
+FILES_CHANGED:
+  - src/hooks/useInput.ts (new)
+  - src/hooks/useInput.test.tsx (new)
+  - src/hooks/index.ts (new)
+KEY_DECISIONS:
+  - Used requestAnimationFrame for smooth interpolation loop (frame-rate independent)
+  - Normalized paddle position to 0-1 range for resolution independence
+  - Smooth interpolation factor (0.3) provides responsive but natural movement
+  - Keyboard speed at 80% per second allows full traverse in 1.25s
+  - Supports both Arrow keys and WASD for accessibility
+  - Touch events use preventDefault to stop scrolling on mobile
+  - All event listeners properly cleaned up on unmount
+DEPENDENCIES_ADDED: none
+PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/6
