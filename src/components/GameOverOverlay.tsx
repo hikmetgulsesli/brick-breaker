@@ -1,6 +1,6 @@
 'use client';
 
-import { calculateCumulativeMaxScore, calculateStars } from '@/utils/score';
+import { calculateMaxScoreForLevel, calculateStars } from '@/utils/score';
 
 interface GameOverOverlayProps {
   score: number;
@@ -10,7 +10,7 @@ interface GameOverOverlayProps {
 }
 
 export const GameOverOverlay = ({ score, level, onRestart, onMenu }: GameOverOverlayProps) => {
-  const maxScore = calculateCumulativeMaxScore(level);
+  const maxScore = calculateMaxScoreForLevel(level);
   const stars = calculateStars(score, maxScore);
   
   return (

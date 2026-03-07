@@ -1,3 +1,18 @@
+<<<<<<< HEAD
+=== US-014: Particle effects system ===
+COMPLETED: 2026-03-07T22:25:00+03:00
+FILES CHANGED: 
+- src/types/game.ts (added Particle interface, MAX_PARTICLES, PARTICLE_LIFETIME to GAME_CONFIG)
+- src/components/ParticleSystem.tsx (new - ParticleSystem class and hook)
+- src/hooks/useGame.ts (integrated ParticleSystem, added particle spawning on brick destruction and power-up collection)
+KEY DECISIONS:
+- Used class-based ParticleSystem with useMemo for React integration (avoids ref access during render issues)
+- Three particle effect types: shatter (brick destruction), sparkle (power-up collection), trail (ball movement)
+- Particle colors match source entity (brick color for bricks, power-up color for power-ups)
+- Efficient cleanup via filter after lifetime expires
+- Max 200 particles enforced via spawn count limiting
+DEPENDENCIES ADDED: none
+=======
 === US-020: Game Over / Victory screen ===
 COMPLETED: 2026-03-07T22:43:00+03:00
 FILES_CHANGED:
@@ -18,3 +33,4 @@ KEY_DECISIONS:
 DEPENDENCIES_ADDED:
 - @testing-library/react, @testing-library/jest-dom, @testing-library/user-event
 - vitest, jsdom, @vitejs/plugin-react
+>>>>>>> origin/feature/initial-game

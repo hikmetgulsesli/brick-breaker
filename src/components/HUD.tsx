@@ -1,14 +1,17 @@
 'use client';
 
+import { MuteToggleButton } from './MuteToggleButton';
+
 interface HUDProps {
   score: number;
   lives: number;
   level: number;
   activePowerUp: string | null;
-  onPauseClick?: () => void;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
 }
 
-export const HUD = ({ score, lives, level, activePowerUp, onPauseClick }: HUDProps) => {
+export const HUD = ({ score, lives, level, activePowerUp, isMuted = false, onToggleMute }: HUDProps) => {
   const getPowerUpLabel = (type: string | null) => {
     switch (type) {
       case 'wide': return 'WIDE';
@@ -31,6 +34,16 @@ export const HUD = ({ score, lives, level, activePowerUp, onPauseClick }: HUDPro
         <span className="hud-label">Level</span>
         <span className="hud-value">{level}</span>
       </div>
+      
+      {onToggleMute && (
+        <div className="hud-item">
+          <MuteToggleButton 
+            isMuted={isMuted} 
+            onToggle={onToggleMute} 
+            size="sm"
+          />
+        </div>
+      )}
       
       {powerUpLabel && (
         <div className="hud-item">
@@ -56,22 +69,6 @@ export const HUD = ({ score, lives, level, activePowerUp, onPauseClick }: HUDPro
           ))}
         </div>
       </div>
-      
-      {onPauseClick && (
-        <div className="hud-item">
-          <button
-            onClick={onPauseClick}
-            className="pause-button"
-            aria-label="Pause game"
-            title="Pause (ESC)"
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <rect x="6" y="4" width="4" height="16" />
-              <rect x="14" y="4" width="4" height="16" />
-            </svg>
-          </button>
-        </div>
-      )}
     </div>
   );
 };

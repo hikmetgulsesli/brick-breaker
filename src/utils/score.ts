@@ -1,43 +1,57 @@
-import { LEVEL_PATTERNS, BRICK_SCORES } from '@/types/game';
+import { BRICK_SCORES, LEVEL_PATTERNS } from '@/types/game';
 
 /**
- * Calculate maximum score for each level based on LEVEL_PATTERNS
+ * Calculate maximum possible score for a single level based on LEVEL_PATTERNS
+ * This is dynamic and will update if LEVEL_PATTERNS changes
  */
-const levelMaxScores = LEVEL_PATTERNS.map(pattern =>
-  pattern.flat().reduce((sum, brickType) => {
-    return sum + (BRICK_SCORES[brickType as keyof typeof BRICK_SCORES] ?? 0);
-  }, 0)
-);
+export const calculateLevelMaxScore = (levelIndex: number): number => {
+  const pattern = LEVEL_PATTERNS[levelIndex];
+  if (!pattern) return 0;
+  
+  let score = 0;
+  for (const row of pattern) {
+    for (const brickLevel of row) {
+      if (brickLevel > 0) {
+        score += BRICK_SCORES[brickLevel as keyof typeof BRICK_SCORES] || 0;
+      }
+    }
+  }
+  return score;
+};
 
 /**
- * Calculate cumulative maximum score up to a given level
- * @param level - 1-based level number
- * @returns Maximum possible score for levels 1 through the given level
+ * Calculate maximum possible score for all levels up to and including the given level
  */
-export const calculateCumulativeMaxScore = (level: number): number => {
-  // level is 1-based, so we sum scores for levels 0 to level - 1
-  return levelMaxScores.slice(0, level).reduce((sum, score) => sum + score, 0);
+export const calculateMaxScoreForLevel = (level: number): number => {
+  let total = 0;
+  for (let i = 0; i < level && i < LEVEL_PATTERNS.length; i++) {
+    total += calculateLevelMaxScore(i);
+  }
+  return total;
+};
+
+/**
+ * Calculate maximum possible score for all 3 levels (victory)
+ */
+export const calculateTotalMaxScore = (): number => {
+  return LEVEL_PATTERNS.reduce((sum, _, index) => sum + calculateLevelMaxScore(index), 0);
 };
 
 /**
  * Calculate star rating based on score percentage
  * 1 star: >30%, 2 stars: >60%, 3 stars: >90%
- * @param score - Current score
- * @param maxScore - Maximum possible score
- * @returns Number of stars (0-3)
  */
 export const calculateStars = (score: number, maxScore: number): number => {
   if (maxScore === 0) return 0;
   const percentage = score / maxScore;
-  // Concise calculation: each threshold adds a star if met
-  return Number(percentage > 0.3) + Number(percentage > 0.6) + Number(percentage > 0.9);
+  if (percentage > 0.9) return 3;
+  if (percentage > 0.6) return 2;
+  if (percentage > 0.3) return 1;
+  return 0;
 };
 
 /**
- * Calculate lives bonus
- * 500 points per remaining life
- * @param lives - Number of remaining lives
- * @returns Bonus points
+ * Calculate lives bonus (500 points per remaining life)
  */
 export const calculateLivesBonus = (lives: number): number => {
   return lives * 500;

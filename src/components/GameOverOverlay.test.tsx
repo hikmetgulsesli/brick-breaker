@@ -22,7 +22,7 @@ describe('GameOverOverlay', () => {
 
   describe('star rating', () => {
     it('shows 0 stars for score ≤30% of max', () => {
-      // Level 1 max score is 440 (44 bricks × 10 points)
+      // Level 1 max score is 440 (44 bricks × 10 points - from LEVEL_PATTERNS)
       // 30% of 440 = 132, so 100 points should give 0 stars
       render(<GameOverOverlay {...defaultProps} score={100} level={1} />);
       const stars = screen.getAllByTestId(/star-\d/);
@@ -43,7 +43,7 @@ describe('GameOverOverlay', () => {
     it('shows 2 stars for score >60% of max', () => {
       // Level 1 max score is 440
       // >60% means >264 points
-      render(<GameOverOverlay {...defaultProps} score={300} level={1} />);
+      render(<GameOverOverlay {...defaultProps} score={280} level={1} />);
       expect(screen.getByTestId('star-1')).toHaveClass('filled');
       expect(screen.getByTestId('star-2')).toHaveClass('filled');
       expect(screen.getByTestId('star-3')).not.toHaveClass('filled');
