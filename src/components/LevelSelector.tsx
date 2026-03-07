@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { LEVELS, LevelConfig } from '../entities/levels';
 import { isLevelUnlocked, getCompletedLevels } from '../lib/progress';
 import { BRICK_COLORS } from '../entities/Brick';
@@ -31,7 +31,10 @@ function LevelPreview({ levelConfig, isLocked }: { levelConfig: LevelConfig; isL
         row.map((durability, colIndex) => {
           if (durability === 0) return null;
           
-          const colors = BRICK_COLORS[durability as 1 | 2 | 3];
+          const colors = BRICK_COLORS[durability as keyof typeof BRICK_COLORS];
+          if (!colors) {
+            return null;
+          }
           
           return (
             <div
@@ -186,16 +189,16 @@ export function LevelSelector({ onSelectLevel, onBack }: LevelSelectorProps) {
     return { unlocked, completed };
   }, []);
 
-  const [unlockedLevels] = useState<Set<number>>(levelStates.unlocked);
-  const [completedLevels] = useState<Set<number>>(levelStates.completed);
+  const unlockedLevels = levelStates.unlocked;
+  const completedLevels = levelStates.completed;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-[#00ff41]/20">
+      <header className="relative flex items-center justify-center px-6 py-4 border-b border-[#00ff41]/20">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-mono text-white/70 hover:text-[#00ff41] transition-colors rounded-lg border border-transparent hover:border-[#00ff41]/30"
+          className="absolute left-6 flex items-center gap-2 px-4 py-2 text-sm font-mono text-white/70 hover:text-[#00ff41] transition-colors rounded-lg border border-transparent hover:border-[#00ff41]/30"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M19 12H5M12 19l-7-7 7-7" />
@@ -206,8 +209,6 @@ export function LevelSelector({ onSelectLevel, onBack }: LevelSelectorProps) {
         <h1 className="text-xl md:text-2xl font-bold font-mono text-[#00ff41] tracking-wider" style={{ textShadow: '0 0 20px rgba(0,255,65,0.5)' }}>
           SELECT LEVEL
         </h1>
-        
-        <div className="w-20" /> {/* Spacer for centering */}
       </header>
 
       {/* Level Grid */}
@@ -235,4 +236,4 @@ export function LevelSelector({ onSelectLevel, onBack }: LevelSelectorProps) {
   );
 }
 
-export default LevelSelector;
+

@@ -69,6 +69,12 @@
   --glow-orange: 0 0 10px color-mix(in srgb, var(--neon-orange) 50%, transparent), 0 0 20px color-mix(in srgb, var(--neon-orange) 30%, transparent);
   --shadow-sm: 0 1px 3px color-mix(in srgb, #000 30%, transparent);
   --shadow-md: 0 4px 12px color-mix(in srgb, #000 40%, transparent);
+=======
+  --neon-green: #00ff41;
+  --neon-green-dark: #00cc33;
+  --neon-orange: #ff9f1c;
+  --neon-red: #ff3864;
+>>>>>>> ef5bee6 (fix: address review comments for US-016)
 }
 
 @theme inline {
