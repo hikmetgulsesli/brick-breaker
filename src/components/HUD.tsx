@@ -1,9 +1,11 @@
 'use client';
 
+import { LifeState, ScoreState, LevelState } from '@/lib/gameState';
+
 interface HUDProps {
-  score: number;
-  lives: number;
-  level: number;
+  score: ScoreState;
+  lives: LifeState;
+  level: LevelState;
   activePowerUp: string | null;
 }
 
@@ -16,41 +18,41 @@ export const HUD = ({ score, lives, level, activePowerUp }: HUDProps) => {
       default: return null;
     }
   };
-  
+
   const powerUpLabel = getPowerUpLabel(activePowerUp);
-  
+
   return (
     <div className="hud">
       <div className="hud-item">
         <span className="hud-label">Score</span>
-        <span className="hud-value">{score.toLocaleString()}</span>
+        <span className="hud-value">{score.current.toLocaleString()}</span>
       </div>
-      
+
       <div className="hud-item">
         <span className="hud-label">Level</span>
-        <span className="hud-value">{level}</span>
+        <span className="hud-value">{level.currentLevel}</span>
       </div>
-      
+
       {powerUpLabel && (
         <div className="hud-item">
           <span className="hud-label">Power</span>
-          <span className="hud-value" style={{ 
-            color: activePowerUp === 'wide' ? 'var(--neon-cyan)' : 
-                   activePowerUp === 'multiball' ? 'var(--neon-orange)' : 
+          <span className="hud-value" style={{
+            color: activePowerUp === 'wide' ? 'var(--neon-cyan)' :
+                   activePowerUp === 'multiball' ? 'var(--neon-orange)' :
                    'var(--neon-red)'
           }}>
             {powerUpLabel}
           </span>
         </div>
       )}
-      
+
       <div className="hud-item">
         <span className="hud-label">Lives</span>
         <div className="lives-container">
-          {[...Array(3)].map((_, i) => (
-            <div 
-              key={i} 
-              className={`life-icon ${i >= lives ? 'lost' : ''}`}
+          {[...Array(lives.max)].map((_, i) => (
+            <div
+              key={i}
+              className={`life-icon ${i >= lives.current ? 'lost' : ''}`}
             />
           ))}
         </div>
