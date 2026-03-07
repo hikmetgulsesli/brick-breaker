@@ -2,6 +2,9 @@
 
 ## Completed Stories
 
+### US-011: Power-ups system - Wide Paddle [done]
+- Files: (see PR)
+
 ### US-001: Project setup and design tokens [done]
 - Files: Complete Retro Brick Breaker game implementation with Next.js 15, React 19, TypeScript. Features include: retro neon aesthetic with custom CSS design tokens (cyan, pink, green, red, orange neon colors), ball physics with angle calculation and progressive speed increase, 3 level brick patterns, 3 power-ups (wide paddle, multi-ball, laser), 3-life system, high score persistence via localStorage, 5 game screens (Main Menu, Game Area, Pause, Game Over, Victory), responsive design (375-1440px), keyboard/mouse/touch controls.
 
