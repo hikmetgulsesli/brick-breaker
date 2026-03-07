@@ -1,0 +1,12 @@
+=== US-003: Canvas architecture and game loop hook ===
+COMPLETED: 2025-03-07T20:18:00+03:00
+FILES_CHANGED:
+  - src/hooks/useGameLoop.ts (new)
+  - src/components/GameCanvas.tsx (new)
+KEY_DECISIONS:
+  - Used ResizeObserver for responsive scaling instead of window resize events
+  - Capped devicePixelRatio at 3x for performance on ultra-high-DPI displays
+  - Implemented loop function via ref to avoid circular dependency issues with useCallback
+  - Used imperative ref API for GameCanvas to allow parent components direct canvas access
+DEPENDENCIES_ADDED: none
+PR_URL: https://github.com/hikmetgulsesli/brick-breaker/pull/4
