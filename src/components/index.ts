@@ -1,6 +1,5 @@
-export { HUD } from './HUD';
-export { GameOverlay } from './GameOverlay';
 export { MainMenu } from './MainMenu';
+export { HighScores } from './HighScores';
 export { GameCanvas } from './GameCanvas';
-export { NeonButton } from './NeonButton';
-export { LevelSelector, type LevelSelectorProps } from './LevelSelector';
+export { PauseOverlay } from './PauseOverlay';
+export { GameOverScreen } from './GameOverScreen';
