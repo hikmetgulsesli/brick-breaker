@@ -1,57 +1,64 @@
 'use client';
 
-import { memo } from 'react';
-import { ScoreDisplay } from './ScoreDisplay';
-import { LifeCounter } from './LifeCounter';
-import { LevelIndicator } from './LevelIndicator';
-import { PowerUpIndicator } from './PowerUpIndicator';
-import type { PowerUpType } from '@/types/game';
+import { LifeState, ScoreState, LevelState } from '@/lib/gameState';
 
 interface HUDProps {
-  score: number;
-  lives: number;
-  level: number;
-  activePowerUp: PowerUpType | null;
-  powerUpEndTime?: number | null;
+  score: ScoreState;
+  lives: LifeState;
+  level: LevelState;
+  activePowerUp: string | null;
+  powerUpTimeRemaining?: number | null;
 }
 
-export const HUD = memo(({ 
-  score, 
-  lives, 
-  level, 
-  activePowerUp,
-  powerUpEndTime = null 
-}: HUDProps) => {
+export const HUD = ({ score, lives, level, activePowerUp, powerUpTimeRemaining }: HUDProps) => {
+  const getPowerUpLabel = (type: string | null) => {
+    switch (type) {
+      case 'wide': return 'WIDE';
+      case 'multiball': return 'MULTI';
+      case 'laser': return 'LASER';
+      default: return null;
+    }
+  };
+
+  const powerUpLabel = getPowerUpLabel(activePowerUp);
+  const formattedTime = powerUpTimeRemaining ? Math.ceil(powerUpTimeRemaining / 1000) : null;
+
   return (
-    <div className="hud-overlay">
-      {/* Top Bar - Score, Level, Lives */}
-      <div className="hud-top-bar">
-        <div className="hud-left">
-          <ScoreDisplay score={score} />
-        </div>
-        
-        <div className="hud-center">
-          <LevelIndicator level={level} />
-        </div>
-        
-        <div className="hud-right">
-          <LifeCounter lives={lives} />
-        </div>
+    <div className="hud">
+      <div className="hud-item">
+        <span className="hud-label">Score</span>
+        <span className="hud-value">{score.current.toLocaleString()}</span>
       </div>
-      
-      {/* Bottom Bar - PowerUp Indicator */}
-      {activePowerUp && (
-        <div className="hud-bottom-bar">
-          <div className="hud-bottom-left">
-            <PowerUpIndicator 
-              activePowerUp={activePowerUp} 
-              powerUpEndTime={powerUpEndTime} 
-            />
-          </div>
+
+      <div className="hud-item">
+        <span className="hud-label">Level</span>
+        <span className="hud-value">{level.currentLevel}</span>
+      </div>
+
+      {powerUpLabel && (
+        <div className="hud-item">
+          <span className="hud-label">Power</span>
+          <span className="hud-value" style={{
+            color: activePowerUp === 'wide' ? 'var(--neon-cyan)' :
+                   activePowerUp === 'multiball' ? 'var(--neon-purple)' :
+                   'var(--neon-red)'
+          }}>
+            {powerUpLabel}{formattedTime !== null && activePowerUp !== 'multiball' ? ` ${formattedTime}s` : ''}
+          </span>
         </div>
       )}
+
+      <div className="hud-item">
+        <span className="hud-label">Lives</span>
+        <div className="lives-container">
+          {[...Array(lives.max)].map((_, i) => (
+            <div
+              key={i}
+              className={`life-icon ${i >= lives.current ? 'lost' : ''}`}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
-});
-
-HUD.displayName = 'HUD';
+};

@@ -67,12 +67,24 @@ export interface Particle extends Position {
   lifetime: number;
   maxLifetime: number;
   active: boolean;
+  type?: 'shatter' | 'sparkle' | 'trail';
 }
 
 export interface GameStats {
   score: number;
   lives: number;
   level: number;
+}
+
+// High Score types for US-017
+export interface Score {
+  id: string;
+  score: number;
+  date: string;
+}
+
+export interface HighScoresState {
+  scores: Score[];
 }
 
 export interface ScoreEntry {
@@ -96,6 +108,8 @@ export interface Level {
   cols: number;
   speedMultiplier: number;
 }
+
+export type GameScreen = 'menu' | 'game' | 'high-scores' | 'game-over';
 
 export interface GameConfig {
   CANVAS_WIDTH: number;
@@ -128,11 +142,11 @@ export interface GameConfig {
   canvas: { width: number; height: number };
   paddle: { width: number; height: number; wideWidth: number; yOffset: number; speed: number };
   ball: { radius: number; baseSpeed: number; maxSpeed: number };
+  particle: { maxCount: number; lifetime: number };
   brick: { width: number; height: number; gap: number; rows: number; cols: number };
   powerUp: { chance: number; fallSpeed: number; wideDuration: number; laserDuration: number };
   laser: { speed: number; width: number; height: number };
   game: { maxLives: number; fps: number };
-  particle: { maxCount: number; lifetime: number };
 }
 
 // Color constants for consistent theming
@@ -152,54 +166,16 @@ export const BRICK_COLORS = {
   3: COLORS.NEON_RED,
 } as const;
 
+export const POWERUP_COLORS = {
+  wide: '#00f5ff',
+  multiball: '#ff9e00',
+  laser: '#ff073a',
+} as const;
+
 export const BRICK_SCORES = {
   1: 10,
   2: 20,
   3: 50,
-} as const;
-
-export const POWERUP_COLORS = {
-  wide: '#00f5ff',
-  multiball: '#bc13fe',
-  laser: '#ff073a',
-} as const;
-
-export const GAME_CONFIG: GameConfig = {
-  CANVAS_WIDTH: 800,
-  CANVAS_HEIGHT: 600,
-  PADDLE_WIDTH: 100,
-  PADDLE_HEIGHT: 12,
-  PADDLE_WIDTH_WIDE: 160,
-  PADDLE_Y_OFFSET: 40,
-  PADDLE_SPEED: 8,
-  BALL_RADIUS: 6,
-  BALL_SPEED_BASE: 5,
-  BALL_SPEED_MAX: 12,
-  BRICK_WIDTH: 60,
-  BRICK_HEIGHT: 20,
-  BRICK_GAP: 8,
-  BRICK_ROWS: 5,
-  BRICK_COLS: 10,
-  POWERUP_CHANCE: 0.15,
-  POWERUP_FALL_SPEED: 2,
-  WIDE_DURATION: 10000,
-  LASER_DURATION: 8000,
-  LASER_SPEED: 8,
-  LASER_WIDTH: 4,
-  LASER_HEIGHT: 12,
-  MAX_LIVES: 3,
-  FPS: 60,
-  MAX_PARTICLES: 200,
-  PARTICLE_LIFETIME: 600,
-  // Nested accessors for compatibility with US-002 code
-  get canvas() { return { width: this.CANVAS_WIDTH, height: this.CANVAS_HEIGHT }; },
-  get paddle() { return { width: this.PADDLE_WIDTH, height: this.PADDLE_HEIGHT, wideWidth: this.PADDLE_WIDTH_WIDE, yOffset: this.PADDLE_Y_OFFSET, speed: this.PADDLE_SPEED }; },
-  get ball() { return { radius: this.BALL_RADIUS, baseSpeed: this.BALL_SPEED_BASE, maxSpeed: this.BALL_SPEED_MAX }; },
-  get brick() { return { width: this.BRICK_WIDTH, height: this.BRICK_HEIGHT, gap: this.BRICK_GAP, rows: this.BRICK_ROWS, cols: this.BRICK_COLS }; },
-  get powerUp() { return { chance: this.POWERUP_CHANCE, fallSpeed: this.POWERUP_FALL_SPEED, wideDuration: this.WIDE_DURATION, laserDuration: this.LASER_DURATION }; },
-  get laser() { return { speed: this.LASER_SPEED, width: this.LASER_WIDTH, height: this.LASER_HEIGHT }; },
-  get game() { return { maxLives: this.MAX_LIVES, fps: this.FPS }; },
-  get particle() { return { maxCount: this.MAX_PARTICLES, lifetime: this.PARTICLE_LIFETIME }; },
 } as const;
 
 export const LEVEL_PATTERNS: number[][][] = [
@@ -223,101 +199,93 @@ export const LEVEL_PATTERNS: number[][][] = [
   [
     [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
     [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-    [3, 0, 3, 0, 3, 3, 0, 3, 0, 3],
+    [1, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+    [0, 2, 2, 2, 2, 2, 2, 2, 2, 0],
+    [0, 0, 3, 3, 3, 3, 3, 3, 0, 0],
   ],
 ];
 
-export const INITIAL_BALL: Ball = {
-  x: GAME_CONFIG.CANVAS_WIDTH / 2,
-  y: GAME_CONFIG.CANVAS_HEIGHT / 2,
-  dx: 4,
-  dy: -4,
-  radius: GAME_CONFIG.BALL_RADIUS,
-  active: true,
-};
+// Game configuration constants
+export const GAME_CONFIG: GameConfig = {
+  CANVAS_WIDTH: 800,
+  CANVAS_HEIGHT: 600,
+  PADDLE_WIDTH: 100,
+  PADDLE_HEIGHT: 16,
+  PADDLE_WIDTH_WIDE: 150,
+  PADDLE_Y_OFFSET: 40,
+  PADDLE_SPEED: 8,
+  BALL_RADIUS: 8,
+  BALL_SPEED_BASE: 5,
+  BALL_SPEED_MAX: 12,
+  BRICK_WIDTH: 70,
+  BRICK_HEIGHT: 24,
+  BRICK_GAP: 4,
+  BRICK_ROWS: 5,
+  BRICK_COLS: 10,
+  POWERUP_CHANCE: 0.15,
+  POWERUP_FALL_SPEED: 2,
+  WIDE_DURATION: 10000,
+  LASER_DURATION: 8000,
+  LASER_SPEED: 10,
+  LASER_WIDTH: 4,
+  LASER_HEIGHT: 16,
+  MAX_LIVES: 3,
+  FPS: 60,
+  MAX_PARTICLES: 100,
+  PARTICLE_LIFETIME: 1000,
+  // Nested accessors for compatibility with existing code
+  canvas: { width: 800, height: 600 },
+  paddle: { width: 100, height: 16, wideWidth: 150, yOffset: 40, speed: 8 },
+  ball: { radius: 8, baseSpeed: 5, maxSpeed: 12 },
+  particle: { maxCount: 100, lifetime: 1000 },
+  brick: { width: 70, height: 24, gap: 4, rows: 5, cols: 10 },
+  powerUp: { chance: 0.15, fallSpeed: 2, wideDuration: 10000, laserDuration: 8000 },
+  laser: { speed: 10, width: 4, height: 16 },
+  game: { maxLives: 3, fps: 60 },
+} as const;
 
-export const INITIAL_PADDLE: Paddle = {
-  x: (GAME_CONFIG.CANVAS_WIDTH - GAME_CONFIG.PADDLE_WIDTH) / 2,
-  y: GAME_CONFIG.CANVAS_HEIGHT - GAME_CONFIG.PADDLE_Y_OFFSET,
-  width: GAME_CONFIG.PADDLE_WIDTH,
-  height: GAME_CONFIG.PADDLE_HEIGHT,
-  powerUpState: 'none',
-  powerUpEndTime: null,
-};
-
-export const INITIAL_GAME_STATS: GameStats = {
-  score: 0,
-  lives: GAME_CONFIG.MAX_LIVES,
-  level: 1,
-};
-
-export type TypeGuard<T> = (value: unknown) => value is T;
-
-export const isBall = (value: unknown): value is Ball => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'x' in value &&
-    'y' in value &&
-    'dx' in value &&
-    'dy' in value &&
-    'radius' in value &&
-    'active' in value
-  );
-};
-
-export const isPaddle = (value: unknown): value is Paddle => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'x' in value &&
-    'y' in value &&
-    'width' in value &&
-    'height' in value &&
-    'powerUpState' in value
-  );
-};
-
-export const isBrick = (value: unknown): value is Brick => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'x' in value &&
-    'y' in value &&
-    'width' in value &&
-    'height' in value &&
-    'level' in value &&
-    'active' in value
-  );
-};
-
-export const isPowerUp = (value: unknown): value is PowerUp => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'x' in value &&
-    'y' in value &&
-    'type' in value &&
-    'active' in value &&
-    'duration' in value
-  );
-};
-
-export const isGameState = (value: unknown): value is GameState => {
-  return (
-    typeof value === 'string' &&
-    Object.values(GameState).includes(value as GameState)
-  );
-};
-
-export const isScoreEntry = (value: unknown): value is ScoreEntry => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'score' in value &&
-    'date' in value &&
-    'level' in value
-  );
-};
+// Level configurations
+export const LEVELS: Level[] = [
+  {
+    id: 1,
+    name: 'Level 1',
+    brickLayout: [
+      [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+      [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+      [0, 0, 0, 0, 1, 1, 0, 0, 0, 0],
+    ],
+    rows: 5,
+    cols: 10,
+    speedMultiplier: 1.0,
+  },
+  {
+    id: 2,
+    name: 'Level 2',
+    brickLayout: [
+      [1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
+      [1, 1, 1, 0, 1, 1, 0, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+      [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+    ],
+    rows: 5,
+    cols: 10,
+    speedMultiplier: 1.2,
+  },
+  {
+    id: 3,
+    name: 'Level 3',
+    brickLayout: [
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+      [2, 1, 1, 1, 1, 1, 1, 1, 1, 2],
+      [2, 1, 0, 0, 1, 1, 0, 0, 1, 2],
+      [2, 1, 0, 0, 1, 1, 0, 0, 1, 2],
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    ],
+    rows: 5,
+    cols: 10,
+    speedMultiplier: 1.4,
+  },
+];

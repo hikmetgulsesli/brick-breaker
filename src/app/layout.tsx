@@ -1,28 +1,20 @@
 import type { Metadata } from "next";
-import { Orbitron, Rajdhani, Fira_Code } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const orbitron = Orbitron({
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  variable: "--font-heading",
-  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const rajdhani = Rajdhani({
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
-  variable: "--font-body",
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-const firaCode = Fira_Code({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "Retro Brick Breaker",
-  description: "Classic brick-breaking game with modern web technologies",
+  title: "Brick Breaker - Retro Arcade Game",
+  description: "A classic brick breaker game built with Next.js and React",
 };
 
 export default function RootLayout({
@@ -32,7 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${orbitron.variable} ${rajdhani.variable} ${firaCode.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         {children}
       </body>
     </html>

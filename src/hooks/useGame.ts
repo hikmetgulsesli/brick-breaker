@@ -1,24 +1,27 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect, useSyncExternalStore } from 'react';
-import type {
-  Ball,
-  Paddle,
-  Brick,
-  PowerUp,
-  Laser,
+import { useState, useCallback, useRef, useEffect, useSyncExternalStore, useMemo } from 'react';
+import type { 
+  Ball, 
+  Paddle, 
+  Brick, 
+  PowerUp, 
+  Laser, 
   Particle,
   GameStats,
   HighScore,
-  PowerUpType
+  PowerUpType 
 } from '@/types/game';
-import {
-  GAME_CONFIG,
+import { 
+  GAME_CONFIG, 
   LEVEL_PATTERNS,
   BRICK_COLORS,
   BRICK_SCORES,
+  POWERUP_COLORS,
+  COLORS,
   GameState
 } from '@/types/game';
+import { ParticleSystem } from '@/components/ParticleSystem';
 
 const INITIAL_STATS: GameStats = {
   score: 0,
@@ -116,15 +119,64 @@ export const useGame = () => {
   const [lasers, setLasers] = useState<Laser[]>([]);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [activePowerUp, setActivePowerUp] = useState<PowerUpType | null>(null);
+  const [powerUpTimeRemaining, setPowerUpTimeRemaining] = useState<number | null>(null);
   const highScores = useLocalStorage('brickBreakerHighScores', []);
   const [highScoresState, setHighScoresState] = useState<HighScore[]>(highScores);
-  const particlesRef = useRef<Particle[]>([]);
+  
+  // Particle system - useMemo to create instance once
+  const particleSystem = useMemo(() => new ParticleSystem(GAME_CONFIG.MAX_PARTICLES), []);
+  
+  // Helper to spawn brick destruction particles
+  const spawnBrickShatterEffect = useCallback((brick: Brick) => {
+    const particleCount = Math.floor(Math.random() * 5) + 8;
+    particleSystem.spawnParticles(
+      brick.x + brick.width / 2,
+      brick.y + brick.height / 2,
+      brick.color,
+      particleCount,
+      'shatter'
+    );
+  }, [particleSystem]);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const lastShotTime = useRef<number>(0);
   const powerUpTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const powerUpIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const powerUpEndTimeRef = useRef<number | null>(null);
   const canvasRectRef = useRef<DOMRect | null>(null);
+  const frameCountRef = useRef<number>(0);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  
+  // Initialize audio context on first user interaction
+  const initAudio = useCallback(() => {
+    if (!audioContextRef.current && typeof window !== 'undefined') {
+      audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  }, []);
+  
+  // Play laser sound effect
+  const playLaserSound = useCallback(() => {
+    const ctx = initAudio();
+    if (!ctx) return;
+    
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.15);
+    
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.15);
+  }, [initAudio]);
   
   // Sync highScores to state when loaded from localStorage
   useEffect(() => {
@@ -175,8 +227,10 @@ export const useGame = () => {
     setLasers([]);
     setParticles([]);
     setActivePowerUp(null);
+    particleSystem.clearParticles();
+    frameCountRef.current = 0;
     setGameState(GameState.PLAYING);
-  }, []);
+  }, [particleSystem]);
   
   // Pause/Resume
   const togglePause = useCallback(() => {
@@ -211,11 +265,14 @@ export const useGame = () => {
   // Shoot laser
   const shootLaser = useCallback(() => {
     if (activePowerUp !== 'laser') return;
-    
+
     const now = Date.now();
     if (now - lastShotTime.current < 250) return; // Rate limit
     lastShotTime.current = now;
-    
+
+    // Play laser sound effect
+    playLaserSound();
+
     setLasers(prev => [
       ...prev,
       {
@@ -235,38 +292,7 @@ export const useGame = () => {
         speed: GAME_CONFIG.LASER_SPEED,
       },
     ]);
-  }, [activePowerUp, paddle]);
-  
-  // Spawn particles for brick destruction
-  const spawnParticles = useCallback((x: number, y: number, color: string, count: number = 10) => {
-    const currentCount = particlesRef.current.filter(p => p.active).length;
-    const availableSlots = GAME_CONFIG.MAX_PARTICLES - currentCount;
-    const spawnCount = Math.min(count, availableSlots);
-    
-    if (spawnCount <= 0) return;
-    
-    const newParticles: Particle[] = [];
-    for (let i = 0; i < spawnCount; i++) {
-      const angle = Math.random() * Math.PI + Math.PI;
-      const speed = Math.random() * 3 + 2;
-      
-      newParticles.push({
-        x: x + (Math.random() - 0.5) * 20,
-        y: y + (Math.random() - 0.5) * 10,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        radius: Math.random() * 2 + 1,
-        color,
-        alpha: 1,
-        lifetime: GAME_CONFIG.PARTICLE_LIFETIME,
-        maxLifetime: GAME_CONFIG.PARTICLE_LIFETIME,
-        active: true,
-      });
-    }
-    
-    particlesRef.current = [...particlesRef.current, ...newParticles];
-    setParticles(particlesRef.current);
-  }, []);
+  }, [activePowerUp, paddle, playLaserSound]);
   
   // Spawn power-up
   const spawnPowerUp = useCallback((x: number, y: number) => {
@@ -296,18 +322,30 @@ export const useGame = () => {
     if (activePowerUp === 'wide') {
       setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH }));
     }
-    
-    // Clear previous power-up timeout
+
+    // Clear previous power-up timeout and interval
     if (powerUpTimeoutRef.current) {
       clearTimeout(powerUpTimeoutRef.current);
       powerUpTimeoutRef.current = null;
     }
-    
+    if (powerUpIntervalRef.current) {
+      clearInterval(powerUpIntervalRef.current);
+      powerUpIntervalRef.current = null;
+    }
+
     setActivePowerUp(type);
     
+    // Spawn sparkle effect for power-up collection
+    const powerUpColor = POWERUP_COLORS[type];
+    particleSystem.spawnPowerUpSparkles(paddle.x + paddle.width / 2, paddle.y, powerUpColor);
+
+    // Determine duration once for consistency
+    let duration: number | null = null;
+
     switch (type) {
       case 'wide':
         setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH_WIDE }));
+        duration = GAME_CONFIG.WIDE_DURATION;
         break;
       case 'multiball':
         setBalls(prev => {
@@ -322,23 +360,48 @@ export const useGame = () => {
           return [...prev.filter(b => !b.active), ...activeBalls, ...newBalls];
         });
         // Multiball doesn't timeout
+        setPowerUpTimeRemaining(null);
         return;
       case 'laser':
-        // Laser active
+        duration = GAME_CONFIG.LASER_DURATION;
         break;
     }
-    
-    // Power-up expires after 10 seconds (except multiball)
-    powerUpTimeoutRef.current = setTimeout(() => {
-      setActivePowerUp(() => {
-        // Only revert if this specific power-up is still active
-        if (type === 'wide') {
-          setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH }));
+
+    if (duration !== null) {
+      powerUpEndTimeRef.current = Date.now() + duration;
+      setPowerUpTimeRemaining(duration);
+    }
+
+    // Start countdown interval for timer display
+    powerUpIntervalRef.current = setInterval(() => {
+      const remaining = powerUpEndTimeRef.current ? Math.max(0, powerUpEndTimeRef.current - Date.now()) : 0;
+      setPowerUpTimeRemaining(remaining > 0 ? remaining : null);
+      if (remaining <= 0) {
+        if (powerUpIntervalRef.current) {
+          clearInterval(powerUpIntervalRef.current);
+          powerUpIntervalRef.current = null;
         }
-        return null;
-      });
-    }, 10000);
-  }, [activePowerUp]);
+      }
+    }, 100);
+
+    // Power-up expires after duration (except multiball which returns early)
+    if (duration !== null) {
+      powerUpTimeoutRef.current = setTimeout(() => {
+        setActivePowerUp(() => {
+          // Only revert if this specific power-up is still active
+          if (type === 'wide') {
+            setPaddle(prev => ({ ...prev, width: GAME_CONFIG.PADDLE_WIDTH }));
+          }
+          return null;
+        });
+        setPowerUpTimeRemaining(null);
+        if (powerUpIntervalRef.current) {
+          clearInterval(powerUpIntervalRef.current);
+          powerUpIntervalRef.current = null;
+        }
+      }, duration);
+    }
+  }, [activePowerUp, paddle, particleSystem]);
   
   // Game loop
   useEffect(() => {
@@ -350,7 +413,17 @@ export const useGame = () => {
       return;
     }
     
-    const gameLoop = () => {
+    let lastFrameTime = 0;
+    const gameLoop = (currentTime: number) => {
+      frameCountRef.current++;
+      
+      // Calculate dynamic deltaTime for frame-rate independent physics
+      if (lastFrameTime === 0) {
+        lastFrameTime = currentTime;
+      }
+      const deltaTime = currentTime - lastFrameTime;
+      lastFrameTime = currentTime;
+      
       setBalls(prevBalls => {
         const speed = getSpeedForLevel(stats.level);
         return prevBalls.map(ball => {
@@ -360,6 +433,11 @@ export const useGame = () => {
           let newY = ball.y + ball.dy;
           let newDx = ball.dx;
           let newDy = ball.dy;
+          
+          // Spawn ball trail occasionally
+          if (frameCountRef.current % 3 === 0) {
+            particleSystem.spawnBallTrail(ball.x, ball.y, COLORS.NEON_CYAN);
+          }
           
           // Wall collisions
           if (newX - ball.radius <= 0 || newX + ball.radius >= GAME_CONFIG.CANVAS_WIDTH) {
@@ -429,14 +507,8 @@ export const useGame = () => {
             ) {
               scoreIncrease += brick.level * 10;
               
-              // Spawn particles for brick destruction (8-12 particles)
-              const particleCount = Math.floor(Math.random() * 5) + 8;
-              spawnParticles(
-                brick.x + brick.width / 2,
-                brick.y + brick.height / 2,
-                brick.color,
-                particleCount
-              );
+              // Spawn particles for brick destruction
+              spawnBrickShatterEffect(brick);
               
               // Bounce ball
               setBalls(prev => prev.map(b => 
@@ -521,14 +593,8 @@ export const useGame = () => {
             ) {
               scoreIncrease += brick.level * 10;
               
-              // Spawn particles for brick destruction (8-12 particles)
-              const particleCount = Math.floor(Math.random() * 5) + 8;
-              spawnParticles(
-                brick.x + brick.width / 2,
-                brick.y + brick.height / 2,
-                brick.color,
-                particleCount
-              );
+              // Spawn particles for brick destruction
+              spawnBrickShatterEffect(brick);
               
               laser.active = false;
               return { ...brick, active: false };
@@ -547,33 +613,11 @@ export const useGame = () => {
         return updatedBricks;
       });
       
-      // Update particles
-      particlesRef.current = particlesRef.current
-        .map(particle => {
-          if (!particle.active) return particle;
-          
-          const newX = particle.x + particle.vx;
-          const newY = particle.y + particle.vy;
-          const newVy = particle.vy + 0.1;
-          const newLifetime = particle.lifetime - 16;
-          const newAlpha = Math.max(0, newLifetime / particle.maxLifetime);
-          
-          if (newLifetime <= 0) {
-            return { ...particle, active: false };
-          }
-          
-          return {
-            ...particle,
-            x: newX,
-            y: newY,
-            vy: newVy,
-            lifetime: newLifetime,
-            alpha: newAlpha,
-          };
-        })
-        .filter(particle => particle.active);
+      // Update particles via ParticleSystem with dynamic deltaTime
+      particleSystem.updateParticles(deltaTime);
       
-      setParticles(particlesRef.current);
+      // Sync particles state for rendering
+      setParticles(particleSystem.getParticles());
       
       animationRef.current = requestAnimationFrame(gameLoop);
     };
@@ -585,7 +629,19 @@ export const useGame = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameState, balls, paddle, bricks, lasers, stats.level, stats.score, saveHighScore, spawnPowerUp, applyPowerUp, spawnParticles]);
+  }, [gameState, balls, paddle, bricks, lasers, stats.level, stats.score, saveHighScore, spawnPowerUp, applyPowerUp, particleSystem, spawnBrickShatterEffect]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (powerUpTimeoutRef.current) {
+        clearTimeout(powerUpTimeoutRef.current);
+      }
+      if (powerUpIntervalRef.current) {
+        clearInterval(powerUpIntervalRef.current);
+      }
+    };
+  }, []);
   
   return {
     gameState,
@@ -597,6 +653,7 @@ export const useGame = () => {
     lasers,
     particles,
     activePowerUp,
+    powerUpTimeRemaining,
     highScores: highScoresState,
     canvasRef,
     startGame,
