@@ -1,0 +1,21 @@
+=== US-012: Power-ups system - Multi-Ball ===
+COMPLETED: 2025-03-07T22:03:30+03:00
+FILES CHANGED:
+  - src/types/game.ts (updated POWERUP_COLORS.multiball to #ff9e00)
+  - src/components/HUD.tsx (fixed multiball color display)
+  - src/hooks/useGameRenderer.ts (added pulsing glow and sway animation for multiball)
+  - src/app/globals.css (added pulse-orange and sway keyframes)
+  - src/hooks/__tests__/useGame.multiball.test.tsx (15 comprehensive tests)
+  - src/test/setup.ts (vitest test setup with canvas mock)
+  - vitest.config.ts (vitest configuration)
+  - package.json (added test scripts and vitest dependencies)
+  - tsconfig.json (excluded test files from build)
+  - eslint.config.mjs (added dist to ignores)
+KEY DECISIONS:
+  - Changed multiball power-up color from purple (#bc13fe) to orange (#ff9e00) per spec
+  - Added time-based animation using useRef to track frame time for smooth pulsing/sway
+  - Implemented separate rendering path for multiball vs other power-ups for richer visuals
+  - Set up Vitest with jsdom for component testing
+DEPENDENCIES ADDED:
+  - vitest, @vitejs/plugin-react, jsdom (testing framework)
+  - @testing-library/react, @testing-library/jest-dom (React testing utilities)

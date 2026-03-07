@@ -2,24 +2,26 @@
 
 interface VictoryOverlayProps {
   score: number;
+  lives: number;
+  level: number;
   onRestart: () => void;
   onMenu: () => void;
 }
 
-export const VictoryOverlay = ({ score, onRestart, onMenu }: VictoryOverlayProps) => {
+export const VictoryOverlay = ({ score, lives, level, onRestart, onMenu }: VictoryOverlayProps) => {
   // Calculate stars based on score
   const stars = score > 5000 ? 3 : score > 3000 ? 2 : 1;
-  
+
   return (
     <div className="screen-overlay animate-fade-in">
-      <h2 className="screen-title" style={{ 
+      <h2 className="screen-title" style={{
         background: 'linear-gradient(90deg, var(--neon-green), var(--neon-cyan))',
         WebkitBackgroundClip: 'text',
         WebkitTextFillColor: 'transparent'
       }}>
         Victory!
       </h2>
-      
+
       <div className="star-rating">
         {[1, 2, 3].map(star => (
           <svg
@@ -32,21 +34,32 @@ export const VictoryOverlay = ({ score, onRestart, onMenu }: VictoryOverlayProps
           </svg>
         ))}
       </div>
-      
+
       <div className="score-display" style={{ color: 'var(--neon-green)' }}>
         {score.toLocaleString()}
       </div>
-      
+
       <p className="screen-subtitle">All levels completed!</p>
-      
+
+      <div className="victory-score-breakdown">
+        <div className="breakdown-row">
+          <span className="breakdown-label">Level Reached</span>
+          <span className="breakdown-value">{level}</span>
+        </div>
+        <div className="breakdown-row">
+          <span className="breakdown-label">Lives Remaining</span>
+          <span className="breakdown-value">{lives}</span>
+        </div>
+      </div>
+
       <div className="menu-buttons">
-        <button 
+        <button
           className="menu-button menu-button-primary"
           onClick={onRestart}
         >
           Play Again
         </button>
-        <button 
+        <button
           className="menu-button menu-button-secondary"
           onClick={onMenu}
         >
