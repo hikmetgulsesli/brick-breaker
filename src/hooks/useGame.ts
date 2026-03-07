@@ -1,18 +1,19 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect, useSyncExternalStore } from 'react';
-import type { 
-  Ball, 
-  Paddle, 
-  Brick, 
-  PowerUp, 
-  Laser, 
+import type {
+  Ball,
+  Paddle,
+  Brick,
+  PowerUp,
+  Laser,
+  Particle,
   GameStats,
   HighScore,
-  PowerUpType 
+  PowerUpType
 } from '@/types/game';
-import { 
-  GAME_CONFIG, 
+import {
+  GAME_CONFIG,
   LEVEL_PATTERNS,
   BRICK_COLORS,
   BRICK_SCORES,
@@ -113,9 +114,11 @@ export const useGame = () => {
   const [bricks, setBricks] = useState<Brick[]>([]);
   const [powerUps, setPowerUps] = useState<PowerUp[]>([]);
   const [lasers, setLasers] = useState<Laser[]>([]);
+  const [particles, setParticles] = useState<Particle[]>([]);
   const [activePowerUp, setActivePowerUp] = useState<PowerUpType | null>(null);
   const highScores = useLocalStorage('brickBreakerHighScores', []);
   const [highScoresState, setHighScoresState] = useState<HighScore[]>(highScores);
+  const particlesRef = useRef<Particle[]>([]);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
@@ -170,6 +173,7 @@ export const useGame = () => {
     setBricks(createBricks(level));
     setPowerUps([]);
     setLasers([]);
+    setParticles([]);
     setActivePowerUp(null);
     setGameState(GameState.PLAYING);
   }, []);
@@ -232,6 +236,37 @@ export const useGame = () => {
       },
     ]);
   }, [activePowerUp, paddle]);
+  
+  // Spawn particles for brick destruction
+  const spawnParticles = useCallback((x: number, y: number, color: string, count: number = 10) => {
+    const currentCount = particlesRef.current.filter(p => p.active).length;
+    const availableSlots = GAME_CONFIG.MAX_PARTICLES - currentCount;
+    const spawnCount = Math.min(count, availableSlots);
+    
+    if (spawnCount <= 0) return;
+    
+    const newParticles: Particle[] = [];
+    for (let i = 0; i < spawnCount; i++) {
+      const angle = Math.random() * Math.PI + Math.PI;
+      const speed = Math.random() * 3 + 2;
+      
+      newParticles.push({
+        x: x + (Math.random() - 0.5) * 20,
+        y: y + (Math.random() - 0.5) * 10,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: Math.random() * 2 + 1,
+        color,
+        alpha: 1,
+        lifetime: GAME_CONFIG.PARTICLE_LIFETIME,
+        maxLifetime: GAME_CONFIG.PARTICLE_LIFETIME,
+        active: true,
+      });
+    }
+    
+    particlesRef.current = [...particlesRef.current, ...newParticles];
+    setParticles(particlesRef.current);
+  }, []);
   
   // Spawn power-up
   const spawnPowerUp = useCallback((x: number, y: number) => {
@@ -394,6 +429,15 @@ export const useGame = () => {
             ) {
               scoreIncrease += brick.level * 10;
               
+              // Spawn particles for brick destruction (8-12 particles)
+              const particleCount = Math.floor(Math.random() * 5) + 8;
+              spawnParticles(
+                brick.x + brick.width / 2,
+                brick.y + brick.height / 2,
+                brick.color,
+                particleCount
+              );
+              
               // Bounce ball
               setBalls(prev => prev.map(b => 
                 b === ball ? { ...b, dy: -b.dy } : b
@@ -476,6 +520,16 @@ export const useGame = () => {
               laser.y + laser.height > brick.y
             ) {
               scoreIncrease += brick.level * 10;
+              
+              // Spawn particles for brick destruction (8-12 particles)
+              const particleCount = Math.floor(Math.random() * 5) + 8;
+              spawnParticles(
+                brick.x + brick.width / 2,
+                brick.y + brick.height / 2,
+                brick.color,
+                particleCount
+              );
+              
               laser.active = false;
               return { ...brick, active: false };
             }
@@ -493,6 +547,34 @@ export const useGame = () => {
         return updatedBricks;
       });
       
+      // Update particles
+      particlesRef.current = particlesRef.current
+        .map(particle => {
+          if (!particle.active) return particle;
+          
+          const newX = particle.x + particle.vx;
+          const newY = particle.y + particle.vy;
+          const newVy = particle.vy + 0.1;
+          const newLifetime = particle.lifetime - 16;
+          const newAlpha = Math.max(0, newLifetime / particle.maxLifetime);
+          
+          if (newLifetime <= 0) {
+            return { ...particle, active: false };
+          }
+          
+          return {
+            ...particle,
+            x: newX,
+            y: newY,
+            vy: newVy,
+            lifetime: newLifetime,
+            alpha: newAlpha,
+          };
+        })
+        .filter(particle => particle.active);
+      
+      setParticles(particlesRef.current);
+      
       animationRef.current = requestAnimationFrame(gameLoop);
     };
     
@@ -503,7 +585,7 @@ export const useGame = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [gameState, balls, paddle, bricks, lasers, stats.level, stats.score, saveHighScore, spawnPowerUp, applyPowerUp]);
+  }, [gameState, balls, paddle, bricks, lasers, stats.level, stats.score, saveHighScore, spawnPowerUp, applyPowerUp, spawnParticles]);
   
   return {
     gameState,
@@ -513,6 +595,7 @@ export const useGame = () => {
     bricks,
     powerUps,
     lasers,
+    particles,
     activePowerUp,
     highScores: highScoresState,
     canvasRef,

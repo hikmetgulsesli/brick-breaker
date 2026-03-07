@@ -19,6 +19,7 @@ export const GameCanvas = () => {
     bricks,
     powerUps,
     lasers,
+    particles,
     activePowerUp,
     highScores,
     canvasRef,
@@ -28,7 +29,7 @@ export const GameCanvas = () => {
     updatePaddlePosition,
     shootLaser,
   } = useGame();
-  
+
   useGameRenderer({
     canvasRef,
     paddle,
@@ -36,6 +37,7 @@ export const GameCanvas = () => {
     bricks,
     powerUps,
     lasers,
+    particles,
     activePowerUp,
   });
   
@@ -90,6 +92,7 @@ export const GameCanvas = () => {
             lives={stats.lives}
             level={stats.level}
             activePowerUp={activePowerUp}
+            powerUpEndTime={paddle.powerUpEndTime}
           />
         )}
         

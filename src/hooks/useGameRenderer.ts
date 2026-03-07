@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import type { Ball, Paddle, Brick, PowerUp, Laser, PowerUpType } from '@/types/game';
+import type { Ball, Paddle, Brick, PowerUp, Laser, Particle, PowerUpType } from '@/types/game';
 import { GAME_CONFIG, BRICK_COLORS, POWERUP_COLORS, COLORS } from '@/types/game';
 
 interface UseGameRendererProps {
@@ -11,6 +11,7 @@ interface UseGameRendererProps {
   bricks: Brick[];
   powerUps: PowerUp[];
   lasers: Laser[];
+  particles: Particle[];
   activePowerUp: PowerUpType | null;
 }
 
@@ -21,6 +22,7 @@ export const useGameRenderer = ({
   bricks,
   powerUps,
   lasers,
+  particles,
   activePowerUp,
 }: UseGameRendererProps) => {
   const draw = useCallback(() => {
@@ -198,7 +200,33 @@ export const useGameRenderer = ({
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
-  }, [paddle, balls, bricks, powerUps, lasers, activePowerUp, canvasRef]);
+    
+    // Draw particles
+    particles.forEach(particle => {
+      if (!particle.active || particle.alpha <= 0) return;
+      
+      ctx.save();
+      ctx.globalAlpha = particle.alpha;
+      
+      // Draw particle with glow
+      ctx.shadowColor = particle.color;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = particle.color;
+      
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Inner bright core
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, particle.radius * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.restore();
+    });
+  }, [paddle, balls, bricks, powerUps, lasers, particles, activePowerUp, canvasRef]);
   
   useEffect(() => {
     draw();
