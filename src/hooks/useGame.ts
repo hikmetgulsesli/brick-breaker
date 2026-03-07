@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef, useEffect, useSyncExternalStore } from 'react';
 import type { 
-  GameState, 
   Ball, 
   Paddle, 
   Brick, 
@@ -14,7 +13,10 @@ import type {
 } from '@/types/game';
 import { 
   GAME_CONFIG, 
-  LEVEL_PATTERNS
+  LEVEL_PATTERNS,
+  BRICK_COLORS,
+  BRICK_SCORES,
+  GameState
 } from '@/types/game';
 
 const INITIAL_STATS: GameStats = {
@@ -54,6 +56,8 @@ const createInitialPaddle = (): Paddle => ({
   y: GAME_CONFIG.CANVAS_HEIGHT - GAME_CONFIG.PADDLE_Y_OFFSET,
   width: GAME_CONFIG.PADDLE_WIDTH,
   height: GAME_CONFIG.PADDLE_HEIGHT,
+  powerUpState: 'none',
+  powerUpEndTime: null,
 });
 
 const createInitialBall = (): Ball => ({
@@ -84,6 +88,9 @@ const createBricks = (level: number): Brick[] => {
           width: GAME_CONFIG.BRICK_WIDTH,
           height: GAME_CONFIG.BRICK_HEIGHT,
           level: level as 1 | 2 | 3,
+          durability: level,
+          color: BRICK_COLORS[level as 1 | 2 | 3],
+          scoreValue: BRICK_SCORES[level as 1 | 2 | 3],
           active: true,
         });
       }
@@ -99,7 +106,7 @@ const getSpeedForLevel = (level: number): number => {
 };
 
 export const useGame = () => {
-  const [gameState, setGameState] = useState<GameState>('menu');
+  const [gameState, setGameState] = useState<GameState>(GameState.MENU);
   const [stats, setStats] = useState<GameStats>(INITIAL_STATS);
   const [paddle, setPaddle] = useState<Paddle>(createInitialPaddle());
   const [balls, setBalls] = useState<Ball[]>([createInitialBall()]);
@@ -164,12 +171,12 @@ export const useGame = () => {
     setPowerUps([]);
     setLasers([]);
     setActivePowerUp(null);
-    setGameState('playing');
+    setGameState(GameState.PLAYING);
   }, []);
   
   // Pause/Resume
   const togglePause = useCallback(() => {
-    setGameState(prev => prev === 'playing' ? 'paused' : 'playing');
+    setGameState(prev => prev === GameState.PLAYING ? GameState.PAUSED : GameState.PLAYING);
   }, []);
   
   // Return to menu
@@ -178,7 +185,7 @@ export const useGame = () => {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
-    setGameState('menu');
+    setGameState(GameState.MENU);
   }, []);
   
   // Update paddle position
@@ -213,6 +220,7 @@ export const useGame = () => {
         width: GAME_CONFIG.LASER_WIDTH,
         height: GAME_CONFIG.LASER_HEIGHT,
         active: true,
+        speed: GAME_CONFIG.LASER_SPEED,
       },
       {
         x: paddle.x + paddle.width * 0.75 - GAME_CONFIG.LASER_WIDTH,
@@ -220,6 +228,7 @@ export const useGame = () => {
         width: GAME_CONFIG.LASER_WIDTH,
         height: GAME_CONFIG.LASER_HEIGHT,
         active: true,
+        speed: GAME_CONFIG.LASER_SPEED,
       },
     ]);
   }, [activePowerUp, paddle]);
@@ -241,6 +250,7 @@ export const useGame = () => {
         width: 20,
         height: 20,
         dy: GAME_CONFIG.POWERUP_FALL_SPEED,
+        duration: type === 'wide' ? GAME_CONFIG.WIDE_DURATION : type === 'laser' ? GAME_CONFIG.LASER_DURATION : 0,
       },
     ]);
   }, []);
@@ -356,7 +366,7 @@ export const useGame = () => {
         setStats(prev => {
           const newLives = prev.lives - 1;
           if (newLives <= 0) {
-            setGameState('gameOver');
+            setGameState(GameState.GAME_OVER);
             saveHighScore(prev.score, prev.level);
           } else {
             setBalls([createInitialBall()]);
@@ -414,7 +424,7 @@ export const useGame = () => {
             setActivePowerUp(null);
             setPaddle(createInitialPaddle());
           } else {
-            setGameState('victory');
+            setGameState(GameState.VICTORY);
             saveHighScore(stats.score, stats.level);
           }
         }
