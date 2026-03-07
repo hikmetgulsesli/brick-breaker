@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  turbopack: {
+    resolveAlias: {
+      // Workaround for symlink issues
+    },
+  },
 };
 
 export default nextConfig;

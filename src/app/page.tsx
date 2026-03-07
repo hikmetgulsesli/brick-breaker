@@ -1,126 +1,37 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
-import { MainMenu, HighScores, GameCanvas, PauseOverlay, GameOverScreen } from '@/components';
-import { useHighScores } from '@/hooks';
-import type { GameScreen } from '@/types/game';
+import Link from 'next/link';
+import { ParticleBackground } from '@/components/ParticleBackground';
+import { NeonButton } from '@/components/NeonButton';
 
-export default function Home() {
-  const [screen, setScreen] = useState<GameScreen>('menu');
-  const [score, setScore] = useState(0);
-  const [level, setLevel] = useState(1);
-  const [lives, setLives] = useState(3);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isVictory, setIsVictory] = useState(false);
-
-  const { scores, addScore, clearScores, formatDate, hasScores } = useHighScores();
-
-  // Handle keyboard events
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && screen === 'game' && !isPaused) {
-        setIsPaused(true);
-      } else if (e.key === 'Escape' && screen === 'game' && isPaused) {
-        setIsPaused(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [screen, isPaused]);
-
-  const startGame = useCallback(() => {
-    setScore(0);
-    setLevel(1);
-    setLives(3);
-    setIsPaused(false);
-    setIsVictory(false);
-    setScreen('game');
-  }, []);
-
-  const showHighScores = useCallback(() => {
-    setScreen('high-scores');
-  }, []);
-
-  const showMenu = useCallback(() => {
-    setIsPaused(false);
-    setScreen('menu');
-  }, []);
-
-  const handleGameOver = useCallback((finalScore: number) => {
-    addScore(finalScore);
-    setIsVictory(false);
-    setScreen('game-over');
-  }, [addScore]);
-
-  const handleVictory = useCallback((finalScore: number) => {
-    addScore(finalScore);
-    setIsVictory(true);
-    setScreen('game-over');
-  }, [addScore]);
-
-  const handlePause = useCallback(() => {
-    setIsPaused(true);
-  }, []);
-
-  const handleResume = useCallback(() => {
-    setIsPaused(false);
-  }, []);
-
-  const handleRestart = useCallback(() => {
-    setScore(0);
-    setLevel(1);
-    setLives(3);
-    setIsPaused(false);
-    setScreen('game');
-  }, []);
-
-  const renderScreen = () => {
-    switch (screen) {
-      case 'menu':
-        return (
-          <MainMenu
-            onStartGame={startGame}
-            onShowHighScores={showHighScores}
-          />
-        );
-
-      case 'high-scores':
-        return (
-          <HighScores
-            scores={scores}
-            formatDate={formatDate}
-            onClearScores={clearScores}
-            onBack={showMenu}
-            hasScores={hasScores}
-          />
-        );
-
-      case 'game':
-        return (
-          <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
-            <GameCanvas />
-          </div>
-        );
-
-      case 'game-over':
-        return (
-          <GameOverScreen
-            score={score}
-            isVictory={isVictory}
-            onPlayAgain={startGame}
-            onMenu={showMenu}
-          />
-        );
-
-      default:
-        return <MainMenu onStartGame={startGame} onShowHighScores={showHighScores} />;
-    }
-  };
-
+export default function HomePage() {
   return (
-    <main className="min-h-screen">
-      {renderScreen()}
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden" style={{ background: 'var(--bg-dark)' }}>
+      <ParticleBackground />
+      
+      <div className="relative z-10 flex flex-col items-center text-center">
+        <h1 className="screen-title mb-4">Retro Brick Breaker</h1>
+        <p className="screen-subtitle mb-12">Break all bricks. Save the galaxy.</p>
+        
+        <nav className="menu-buttons">
+          <Link href="/levels" className="w-full">
+            <NeonButton variant="primary" className="w-full">
+              Start Game
+            </NeonButton>
+          </Link>
+          
+          <Link href="/scores" className="w-full">
+            <NeonButton variant="secondary" className="w-full">
+              High Scores
+            </NeonButton>
+          </Link>
+        </nav>
+        
+        <div className="mt-12 text-sm text-center" style={{ color: 'var(--text-muted)' }}>
+          <p>Mouse/Touch to move paddle</p>
+          <p className="mt-1">Click to shoot lasers (when active)</p>
+        </div>
+      </div>
     </main>
   );
 }
