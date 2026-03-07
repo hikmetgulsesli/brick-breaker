@@ -1,7 +1,43 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import type { Ball, Paddle, Brick, PowerUp, PowerUpType } from '@/types/game';
+
+// Local types for GameCanvas (simpler version for this component)
+interface LocalBall {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  radius: number;
+  speed: number;
+}
+
+interface LocalPaddle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface LocalBrick {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  points: number;
+  visible: boolean;
+}
+
+type LocalPowerUpType = 'expand' | 'multi' | 'laser';
+
+interface LocalPowerUp {
+  x: number;
+  y: number;
+  type: LocalPowerUpType;
+  active: boolean;
+  duration: number;
+}
 
 interface GameCanvasProps {
   onGameOver: (score: number) => void;
@@ -50,13 +86,13 @@ export function GameCanvas({
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
-  const paddleRef = useRef<Paddle>({
+  const paddleRef = useRef<LocalPaddle>({
     x: CANVAS_WIDTH / 2 - PADDLE_WIDTH / 2,
     y: CANVAS_HEIGHT - 40,
     width: PADDLE_WIDTH,
     height: PADDLE_HEIGHT,
   });
-  const ballRef = useRef<Ball>({
+  const ballRef = useRef<LocalBall>({
     x: CANVAS_WIDTH / 2,
     y: CANVAS_HEIGHT - 60,
     dx: 4,
@@ -64,8 +100,8 @@ export function GameCanvas({
     radius: BALL_RADIUS,
     speed: 5,
   });
-  const bricksRef = useRef<Brick[]>([]);
-  const powerUpsRef = useRef<PowerUp[]>([]);
+  const bricksRef = useRef<LocalBrick[]>([]);
+  const powerUpsRef = useRef<LocalPowerUp[]>([]);
   const scoreRef = useRef(score);
   const livesRef = useRef(lives);
   const [isReady, setIsReady] = useState(false);
@@ -76,7 +112,7 @@ export function GameCanvas({
 
   // Initialize bricks
   const initBricks = useCallback(() => {
-    const bricks: Brick[] = [];
+    const bricks: LocalBrick[] = [];
     for (let row = 0; row < BRICK_ROWS; row++) {
       for (let col = 0; col < BRICK_COLS; col++) {
         bricks.push({
@@ -149,7 +185,7 @@ export function GameCanvas({
   }, []);
 
   // Check collision between ball and brick
-  const checkBrickCollision = useCallback((ball: Ball, brick: Brick): boolean => {
+  const checkBrickCollision = useCallback((ball: LocalBall, brick: LocalBrick): boolean => {
     return ball.x + ball.radius > brick.x &&
            ball.x - ball.radius < brick.x + brick.width &&
            ball.y + ball.radius > brick.y &&
@@ -159,7 +195,7 @@ export function GameCanvas({
   // Spawn power-up
   const spawnPowerUp = useCallback((x: number, y: number) => {
     if (Math.random() < 0.15) { // 15% chance
-      const types: PowerUpType[] = ['expand', 'multi', 'laser'];
+      const types: LocalPowerUpType[] = ['expand', 'multi', 'laser'];
       const type = types[Math.floor(Math.random() * types.length)];
       powerUpsRef.current.push({
         x,
@@ -313,7 +349,7 @@ export function GameCanvas({
         }
         
         // Draw power-up
-        const colors: Record<PowerUpType, string> = {
+        const colors: Record<LocalPowerUpType, string> = {
           expand: '#22c55e',
           multi: '#f97316',
           laser: '#ef4444',
