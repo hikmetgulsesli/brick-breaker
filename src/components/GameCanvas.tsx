@@ -90,6 +90,7 @@ export const GameCanvas = () => {
             lives={stats.lives}
             level={stats.level}
             activePowerUp={activePowerUp}
+            onPauseClick={togglePause}
           />
         )}
         

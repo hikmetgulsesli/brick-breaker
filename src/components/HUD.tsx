@@ -5,9 +5,10 @@ interface HUDProps {
   lives: number;
   level: number;
   activePowerUp: string | null;
+  onPauseClick?: () => void;
 }
 
-export const HUD = ({ score, lives, level, activePowerUp }: HUDProps) => {
+export const HUD = ({ score, lives, level, activePowerUp, onPauseClick }: HUDProps) => {
   const getPowerUpLabel = (type: string | null) => {
     switch (type) {
       case 'wide': return 'WIDE';
@@ -55,6 +56,22 @@ export const HUD = ({ score, lives, level, activePowerUp }: HUDProps) => {
           ))}
         </div>
       </div>
+      
+      {onPauseClick && (
+        <div className="hud-item">
+          <button
+            onClick={onPauseClick}
+            className="pause-button"
+            aria-label="Pause game"
+            title="Pause (ESC)"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16" />
+              <rect x="14" y="4" width="4" height="16" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

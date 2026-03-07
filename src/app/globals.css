@@ -262,6 +262,32 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
 }
 
+/* Pause Button */
+.pause-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: 2px solid var(--neon-cyan);
+  border-radius: var(--radius-sm);
+  color: var(--neon-cyan);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pause-button:hover {
+  background: rgba(0, 245, 255, 0.15);
+  box-shadow: var(--glow-cyan);
+}
+
+.pause-button svg {
+  width: 12px;
+  height: 12px;
+}
+
 .hud-label {
   color: var(--text-secondary);
   text-transform: uppercase;
