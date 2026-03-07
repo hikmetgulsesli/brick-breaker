@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useMemo } from 'react';
 
 interface ScoreDisplayProps {
   score: number;
@@ -10,14 +10,6 @@ interface ScoreDisplayProps {
 }
 
 export const ScoreDisplay = ({ score, combo, comboMultiplier, className = '' }: ScoreDisplayProps) => {
-  const prevScoreRef = useRef(score);
-  const scoreChanged = score !== prevScoreRef.current;
-  
-  // Update ref after render
-  if (scoreChanged) {
-    prevScoreRef.current = score;
-  }
-
   const formatScore = (value: number): string => {
     return value.toLocaleString();
   };

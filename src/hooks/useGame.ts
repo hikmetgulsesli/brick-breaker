@@ -110,24 +110,6 @@ const calculateBrickScore = (brickLevel: number, comboCount: number): { basePoin
   return { basePoints, totalPoints, newCombo, newMultiplier };
 };
 
-// Calculate final score breakdown - exported for VictoryOverlay
-export const calculateFinalScore = (
-  currentScore: number,
-  lives: number,
-  level: number
-): { basePoints: number; comboBonus: number; levelBonus: number; livesBonus: number; total: number } => {
-  const livesBonus = lives * GAME_CONFIG.REMAINING_LIFE_BONUS;
-  const levelBonus = level >= 3 ? GAME_CONFIG.LEVEL_COMPLETION_BONUS : 0;
-  
-  return {
-    basePoints: currentScore,
-    comboBonus: 0, // Already included in currentScore
-    levelBonus,
-    livesBonus,
-    total: currentScore + levelBonus + livesBonus,
-  };
-};
-
 export const useGame = () => {
   const [gameState, setGameState] = useState<GameState>('menu');
   const [stats, setStats] = useState<GameStats>(INITIAL_STATS);
