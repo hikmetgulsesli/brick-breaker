@@ -1,13 +1,17 @@
 'use client';
 
+import { ScoreDisplay } from './ScoreDisplay';
+
 interface HUDProps {
   score: number;
   lives: number;
   level: number;
+  combo: number;
+  comboMultiplier: number;
   activePowerUp: string | null;
 }
 
-export const HUD = ({ score, lives, level, activePowerUp }: HUDProps) => {
+export const HUD = ({ score, lives, level, combo, comboMultiplier, activePowerUp }: HUDProps) => {
   const getPowerUpLabel = (type: string | null) => {
     switch (type) {
       case 'wide': return 'WIDE';
@@ -22,8 +26,11 @@ export const HUD = ({ score, lives, level, activePowerUp }: HUDProps) => {
   return (
     <div className="hud">
       <div className="hud-item">
-        <span className="hud-label">Score</span>
-        <span className="hud-value">{score.toLocaleString()}</span>
+        <ScoreDisplay 
+          score={score} 
+          combo={combo} 
+          comboMultiplier={comboMultiplier}
+        />
       </div>
       
       <div className="hud-item">

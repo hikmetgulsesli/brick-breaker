@@ -89,6 +89,8 @@ export const GameCanvas = () => {
             score={stats.score}
             lives={stats.lives}
             level={stats.level}
+            combo={stats.combo}
+            comboMultiplier={stats.comboMultiplier}
             activePowerUp={activePowerUp}
           />
         )}
@@ -129,6 +131,8 @@ export const GameCanvas = () => {
         {gameState === 'victory' && (
           <VictoryOverlay 
             score={stats.score}
+            lives={stats.lives}
+            level={stats.level}
             onRestart={() => startGame(1)}
             onMenu={returnToMenu}
           />

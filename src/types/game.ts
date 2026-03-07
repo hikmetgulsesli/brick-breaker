@@ -54,6 +54,16 @@ export interface GameStats {
   score: number;
   lives: number;
   level: number;
+  combo: number;
+  comboMultiplier: number;
+}
+
+export interface ScoreBreakdown {
+  basePoints: number;
+  comboBonus: number;
+  levelBonus: number;
+  livesBonus: number;
+  total: number;
 }
 
 export interface HighScore {
@@ -106,6 +116,12 @@ export const GAME_CONFIG = {
   LASER_HEIGHT: 12,
   MAX_LIVES: 3,
   PADDLE_Y_OFFSET: 40,
+  // Scoring constants
+  BASE_POINTS_PER_BRICK: 10,
+  COMBO_MULTIPLIER_INCREMENT: 0.5,
+  COMBO_BASE_MULTIPLIER: 1,
+  LEVEL_COMPLETION_BONUS: 1000,
+  REMAINING_LIFE_BONUS: 500,
 } as const;
 
 export const LEVEL_PATTERNS: number[][][] = [

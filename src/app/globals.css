@@ -530,3 +530,59 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
+
+/* Victory Score Breakdown */
+.victory-score-breakdown {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  min-width: 280px;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) 0;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+}
+
+.breakdown-row.bonus {
+  color: var(--neon-green);
+}
+
+.breakdown-row.total {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: var(--space-xs);
+}
+
+.breakdown-label {
+  color: var(--text-secondary);
+}
+
+.breakdown-row.bonus .breakdown-label {
+  color: var(--neon-green);
+}
+
+.breakdown-value {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.breakdown-value.total-value {
+  font-size: 1.25rem;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--neon-cyan) 50%, transparent);
+}
+
+.breakdown-divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--space-sm) 0;
+}

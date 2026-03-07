@@ -2,11 +2,13 @@
 
 interface VictoryOverlayProps {
   score: number;
+  lives: number;
+  level: number;
   onRestart: () => void;
   onMenu: () => void;
 }
 
-export const VictoryOverlay = ({ score, onRestart, onMenu }: VictoryOverlayProps) => {
+export const VictoryOverlay = ({ score, lives, level, onRestart, onMenu }: VictoryOverlayProps) => {
   // Calculate stars based on score
   const stars = score > 5000 ? 3 : score > 3000 ? 2 : 1;
   
@@ -38,6 +40,26 @@ export const VictoryOverlay = ({ score, onRestart, onMenu }: VictoryOverlayProps
       </div>
       
       <p className="screen-subtitle">All levels completed!</p>
+      
+      <div className="victory-bonus" style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '8px',
+        margin: '16px 0',
+        padding: '12px 20px',
+        background: 'rgba(0, 245, 255, 0.1)',
+        borderRadius: '8px',
+        border: '1px solid var(--neon-cyan)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px' }}>
+          <span style={{ color: 'var(--text-muted)' }}>Level Reached</span>
+          <span style={{ color: 'var(--neon-cyan)', fontWeight: 'bold' }}>{level}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '24px' }}>
+          <span style={{ color: 'var(--text-muted)' }}>Lives Remaining</span>
+          <span style={{ color: 'var(--neon-green)', fontWeight: 'bold' }}>{lives}</span>
+        </div>
+      </div>
       
       <div className="menu-buttons">
         <button 
