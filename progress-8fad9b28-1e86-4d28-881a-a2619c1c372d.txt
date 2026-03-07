@@ -1,0 +1,20 @@
+=== US-020: Game Over / Victory screen ===
+COMPLETED: 2026-03-07T22:43:00+03:00
+FILES_CHANGED:
+- src/components/GameOverOverlay.tsx (enhanced with star rating)
+- src/components/VictoryOverlay.tsx (enhanced with star rating and lives bonus)
+- src/components/GameCanvas.tsx (updated props for overlays)
+- src/components/GameOverOverlay.test.tsx (new test file)
+- src/components/VictoryOverlay.test.tsx (new test file)
+- src/test/setup.ts (new vitest setup)
+- vitest.config.ts (new vitest config)
+- package.json (added test script and testing libraries)
+KEY_DECISIONS:
+- Star rating thresholds: >30% = 1 star, >60% = 2 stars, >90% = 3 stars of max possible score
+- Lives bonus: 500 points per remaining life added to final score on victory
+- Max score calculated per level based on brick patterns in types/game.ts
+- Play Again restarts at current level for Game Over, level 1 for Victory
+- Used data-testid attributes for reliable test selectors
+DEPENDENCIES_ADDED:
+- @testing-library/react, @testing-library/jest-dom, @testing-library/user-event
+- vitest, jsdom, @vitejs/plugin-react

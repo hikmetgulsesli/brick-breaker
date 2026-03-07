@@ -28,7 +28,7 @@ export const GameCanvas = () => {
     updatePaddlePosition,
     shootLaser,
   } = useGame();
-  
+
   useGameRenderer({
     canvasRef,
     paddle,
@@ -38,24 +38,24 @@ export const GameCanvas = () => {
     lasers,
     activePowerUp,
   });
-  
+
   // Handle mouse/touch movement
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     updatePaddlePosition(e.clientX);
   }, [updatePaddlePosition]);
-  
+
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (e.touches.length > 0) {
       updatePaddlePosition(e.touches[0].clientX);
     }
   }, [updatePaddlePosition]);
-  
+
   const handleClick = useCallback(() => {
     if (gameState === 'playing' && activePowerUp === 'laser') {
       shootLaser();
     }
   }, [gameState, activePowerUp, shootLaser]);
-  
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,17 +75,17 @@ export const GameCanvas = () => {
           break;
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameState, togglePause, activePowerUp, shootLaser]);
-  
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ background: 'var(--bg-dark)' }}>
       <div className="game-container">
         {/* HUD */}
         {(gameState === 'playing' || gameState === 'paused') && (
-          <HUD 
+          <HUD
             score={stats.score}
             lives={stats.lives}
             level={stats.level}
@@ -93,7 +93,7 @@ export const GameCanvas = () => {
             onPauseClick={togglePause}
           />
         )}
-        
+
         {/* Game Canvas */}
         <canvas
           ref={canvasRef}
@@ -104,31 +104,31 @@ export const GameCanvas = () => {
           onTouchMove={handleTouchMove}
           onClick={handleClick}
         />
-        
+
         {/* Screens */}
         {gameState === 'menu' && (
           <MainMenu onStartGame={() => startGame(1)} onShowHighScores={() => {}} />
         )}
-        
+
         {gameState === 'paused' && (
-          <PauseOverlay 
+          <PauseOverlay
             onResume={togglePause}
             onRestart={() => startGame(stats.level)}
             onMenu={returnToMenu}
           />
         )}
-        
+
         {gameState === 'gameOver' && (
-          <GameOverOverlay 
+          <GameOverOverlay
             score={stats.score}
             level={stats.level}
-            onRestart={() => startGame(1)}
+            onRestart={() => startGame(stats.level)}
             onMenu={returnToMenu}
           />
         )}
-        
+
         {gameState === 'victory' && (
-          <VictoryOverlay 
+          <VictoryOverlay
             score={stats.score}
             lives={stats.lives}
             level={stats.level}
@@ -137,7 +137,7 @@ export const GameCanvas = () => {
           />
         )}
       </div>
-      
+
       {/* Instructions */}
       <div className="mt-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
         <p>Mouse/Touch: Move paddle | Click/Space: Shoot lasers | ESC/P: Pause</p>
