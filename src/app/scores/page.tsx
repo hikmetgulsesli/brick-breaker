@@ -59,7 +59,7 @@ export default function ScoresPage() {
               </thead>
               <tbody>
                 {highScores.map((score, index) => (
-                  <tr key={index} className="border-b border-gray-800 last:border-0">
+                  <tr key={score.date} className="border-b border-gray-800 last:border-0">
                     <td className="py-3 px-2 text-sm font-bold" style={{ color: index < 3 ? 'var(--neon-cyan)' : 'var(--text-secondary)' }}>
                       #{index + 1}
                       {index === 0 && ' 🥇'}
