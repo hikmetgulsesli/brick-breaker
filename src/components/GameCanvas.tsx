@@ -29,10 +29,10 @@ import { isBallOutOfBounds } from '../lib/gameReducer';
 
 interface GameCanvasProps {
   levelNumber: number;
-  lives: number;
   onLifeLost: () => void;
   onScoreAdd: (points: number) => void;
   onLevelComplete: () => void;
+  onProgressUpdate: (destroyed: number, total: number) => void;
   isPaused: boolean;
 }
 
@@ -59,6 +59,7 @@ export function GameCanvas({
   onLifeLost,
   onScoreAdd,
   onLevelComplete,
+  onProgressUpdate,
   isPaused,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -335,8 +336,10 @@ export function GameCanvas({
               bricksDestroyedRef.current++;
               // Award points
               onScoreAdd(BRICK_POINTS[brick.durability + 1 as 1 | 2 | 3] || 10);
+              // Update progress in parent component
+              onProgressUpdate(bricksDestroyedRef.current, bricksRef.current.length);
             }
-            
+
             // Reflect ball
             if (brickCollision.normal) {
               ball.velocity = resolveBallCollision(ball, brickCollision).velocity;
@@ -398,7 +401,7 @@ export function GameCanvas({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [onLifeLost, onScoreAdd, onLevelComplete, resetBall, drawBrick, drawPaddle, drawBall]);
+  }, [onLifeLost, onScoreAdd, onLevelComplete, onProgressUpdate, resetBall, drawBrick, drawPaddle, drawBall]);
 
   return (
     <>

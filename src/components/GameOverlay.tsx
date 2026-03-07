@@ -12,78 +12,17 @@
 'use client';
 
 import { GameState, ScoreState, LevelState } from '../lib/gameState';
+import { NeonButton } from './NeonButton';
+import { calculateStarRating } from '../lib/gameReducer';
 
 interface GameOverlayProps {
   gameState: GameState;
   score: ScoreState;
   level: LevelState;
+  lives: { current: number; max: number };
   onResume: () => void;
   onRestart: () => void;
   onReturnToMenu: () => void;
-}
-
-/** Button Component with Neon Glow */
-function NeonButton({ 
-  onClick, 
-  children, 
-  variant = 'primary',
-  className = ''
-}: { 
-  onClick: () => void; 
-  children: React.ReactNode; 
-  variant?: 'primary' | 'secondary' | 'danger' | 'success';
-  className?: string;
-}) {
-  const getColors = () => {
-    switch (variant) {
-      case 'primary': return { bg: '#00d4ff', glow: 'rgba(0, 212, 255, 0.5)' };
-      case 'secondary': return { bg: '#888', glow: 'rgba(136, 136, 136, 0.5)' };
-      case 'danger': return { bg: '#ff3864', glow: 'rgba(255, 56, 100, 0.5)' };
-      case 'success': return { bg: '#00ff41', glow: 'rgba(0, 255, 65, 0.5)' };
-      default: return { bg: '#00d4ff', glow: 'rgba(0, 212, 255, 0.5)' };
-    }
-  };
-
-  const colors = getColors();
-
-  return (
-    <>
-      <style jsx>{`
-        .neon-button {
-          padding: 14px 32px;
-          font-size: 16px;
-          font-weight: bold;
-          letter-spacing: 2px;
-          text-transform: uppercase;
-          border: 2px solid ${colors.bg};
-          background: transparent;
-          color: ${colors.bg};
-          cursor: pointer;
-          border-radius: 4px;
-          transition: all 0.3s ease;
-          font-family: 'Courier New', monospace;
-          min-width: 180px;
-        }
-
-        .neon-button:hover {
-          background: ${colors.bg};
-          color: #000;
-          box-shadow: 0 0 20px ${colors.glow}, 0 0 40px ${colors.glow};
-          transform: translateY(-2px);
-        }
-
-        .neon-button:active {
-          transform: translateY(0);
-        }
-      `}</style>
-      <button 
-        className={`neon-button ${className}`}
-        onClick={onClick}
-      >
-        {children}
-      </button>
-    </>
-  );
 }
 
 /** Star Rating Component */
@@ -243,19 +182,15 @@ function GameOverOverlay({ score, onRestart, onReturnToMenu }: {
 }
 
 /** Victory Overlay */
-function VictoryOverlay({ score, level, onRestart, onReturnToMenu }: {
+function VictoryOverlay({ score, level, lives, onRestart, onReturnToMenu }: {
   score: ScoreState;
   level: LevelState;
+  lives: { current: number; max: number };
   onRestart: () => void;
   onReturnToMenu: () => void;
 }) {
-  // Calculate stars based on performance
-  const calculateStars = (): 1 | 2 | 3 => {
-    const baseScore = level.currentLevel * 1000;
-    if (score.current >= baseScore * 2) return 3;
-    if (score.current >= baseScore * 1.5) return 2;
-    return 1;
-  };
+  // Calculate stars based on performance using centralized helper
+  const stars = calculateStarRating(score.current, level.currentLevel, lives.current);
 
   return (
     <>
@@ -309,7 +244,7 @@ function VictoryOverlay({ score, level, onRestart, onReturnToMenu }: {
       <div className="final-score">
         <div className="final-score-value">{score.current.toLocaleString()}</div>
       </div>
-      <StarRating stars={calculateStars()} />
+      <StarRating stars={stars} />
       <div className="button-group">
         <NeonButton onClick={onRestart} variant="success">Play Again</NeonButton>
         <NeonButton onClick={onReturnToMenu} variant="secondary">Main Menu</NeonButton>
@@ -323,6 +258,7 @@ export function GameOverlay({
   gameState,
   score,
   level,
+  lives,
   onResume,
   onRestart,
   onReturnToMenu,
@@ -382,9 +318,10 @@ export function GameOverlay({
           />
         )}
         {gameState === 'VICTORY' && (
-          <VictoryOverlay 
+          <VictoryOverlay
             score={score}
             level={level}
+            lives={lives}
             onRestart={onRestart}
             onReturnToMenu={onReturnToMenu}
           />

@@ -10,77 +10,12 @@
 import { useState, useMemo } from 'react';
 import { LEVELS, LevelConfig } from '../entities/levels';
 import { getBrickCount } from '../entities/levels';
+import { NeonButton } from './NeonButton';
 
 interface MainMenuProps {
   highScore: number;
   unlockedLevels: number[];
   onStartGame: (levelNumber: number) => void;
-}
-
-/** Button Component with Neon Glow */
-function NeonButton({ 
-  onClick, 
-  children, 
-  variant = 'primary',
-  disabled = false
-}: { 
-  onClick: () => void; 
-  children: React.ReactNode; 
-  variant?: 'primary' | 'secondary' | 'danger' | 'success';
-  disabled?: boolean;
-}) {
-  const getColors = () => {
-    if (disabled) return { bg: '#444', glow: 'transparent' };
-    switch (variant) {
-      case 'primary': return { bg: '#00ff41', glow: 'rgba(0, 255, 65, 0.5)' };
-      case 'secondary': return { bg: '#00d4ff', glow: 'rgba(0, 212, 255, 0.5)' };
-      case 'danger': return { bg: '#ff3864', glow: 'rgba(255, 56, 100, 0.5)' };
-      case 'success': return { bg: '#ffd700', glow: 'rgba(255, 215, 0, 0.5)' };
-      default: return { bg: '#00d4ff', glow: 'rgba(0, 212, 255, 0.5)' };
-    }
-  };
-
-  const colors = getColors();
-
-  return (
-    <>
-      <style jsx>{`
-        .neon-button {
-          padding: 16px 40px;
-          font-size: 18px;
-          font-weight: bold;
-          letter-spacing: 3px;
-          text-transform: uppercase;
-          border: 2px solid ${colors.bg};
-          background: ${disabled ? '#222' : 'transparent'};
-          color: ${disabled ? '#666' : colors.bg};
-          cursor: ${disabled ? 'not-allowed' : 'pointer'};
-          border-radius: 4px;
-          transition: all 0.3s ease;
-          font-family: 'Courier New', monospace;
-          min-width: 220px;
-        }
-
-        .neon-button:not(:disabled):hover {
-          background: ${colors.bg};
-          color: #000;
-          box-shadow: 0 0 20px ${colors.glow}, 0 0 40px ${colors.glow};
-          transform: translateY(-2px);
-        }
-
-        .neon-button:not(:disabled):active {
-          transform: translateY(0);
-        }
-      `}</style>
-      <button 
-        className="neon-button"
-        onClick={onClick}
-        disabled={disabled}
-      >
-        {children}
-      </button>
-    </>
-  );
 }
 
 /** Level Card Component */

@@ -1,6 +1,6 @@
 /**
  * Brick Breaker Game
- * 
+ *
  * Main game page integrating:
  * - Main Menu
  * - Game HUD with life system
@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useReducer, useEffect, useCallback, useMemo } from 'react';
+import { useReducer, useEffect, useCallback, useMemo, useRef } from 'react';
 import { HUD, GameOverlay, MainMenu, GameCanvas } from '../components';
 import { GameStateData, GameAction } from '../lib/gameState';
 import { gameStateReducer, createInitialState } from '../lib/gameReducer';
@@ -53,38 +53,52 @@ export default function BrickBreakerPage() {
   // Initialize game state with high score from localStorage
   const [gameState, dispatch] = useReducer(
     (state: GameStateData, action: GameAction) => {
-      const newState = gameStateReducer(state, action);
-      // Persist high score
-      if (newState.score.highScore !== state.score.highScore) {
-        saveHighScore(newState.score.highScore);
-      }
-      return newState;
+      return gameStateReducer(state, action);
     },
     null,
     () => {
       const initial = createInitialState();
+      const highScore = loadHighScore();
       return {
         ...initial,
         score: {
           ...initial.score,
-          highScore: loadHighScore(),
+          highScore,
         },
       };
     }
   );
 
-  // Compute unlocked levels using useMemo instead of useEffect
+  // Track previous high score for useEffect comparison
+  const prevHighScoreRef = useRef<number>(gameState.score.highScore);
+
+  // Persist high score when it changes (side effect in useEffect, not reducer)
+  useEffect(() => {
+    if (gameState.score.highScore !== prevHighScoreRef.current) {
+      saveHighScore(gameState.score.highScore);
+      prevHighScoreRef.current = gameState.score.highScore;
+    }
+  }, [gameState.score.highScore]);
+
+  // Compute unlocked levels using useMemo for initial load
   const unlockedLevels = useMemo(() => loadUnlockedLevels(), []);
 
-  // Update unlocked levels when level changes - compute derived value
+  // Track unlocked levels in state for useEffect to save
   const effectiveUnlockedLevels = useMemo(() => {
+    const currentLevel = gameState.level.currentLevel;
+    if (!unlockedLevels.includes(currentLevel)) {
+      return [...unlockedLevels, currentLevel].sort((a, b) => a - b);
+    }
+    return unlockedLevels;
+  }, [gameState.level.currentLevel, unlockedLevels]);
+
+  // Save unlocked levels to localStorage when they change (side effect in useEffect)
+  useEffect(() => {
     const currentLevel = gameState.level.currentLevel;
     if (!unlockedLevels.includes(currentLevel)) {
       const newUnlocked = [...unlockedLevels, currentLevel].sort((a, b) => a - b);
       saveUnlockedLevels(newUnlocked);
-      return newUnlocked;
     }
-    return unlockedLevels;
   }, [gameState.level.currentLevel, unlockedLevels]);
 
   // Handle keyboard controls
@@ -144,6 +158,10 @@ export default function BrickBreakerPage() {
     dispatch({ type: 'LEVEL_COMPLETE' });
   }, []);
 
+  const handleProgressUpdate = useCallback((destroyed: number, total: number) => {
+    dispatch({ type: 'UPDATE_BRICK_PROGRESS', payload: { destroyed, total } });
+  }, []);
+
   // Show main menu
   if (gameState.state === 'MENU') {
     return (
@@ -184,10 +202,10 @@ export default function BrickBreakerPage() {
       >
         <GameCanvas
           levelNumber={gameState.level.currentLevel}
-          lives={gameState.lives.current}
           onLifeLost={handleLifeLost}
           onScoreAdd={handleScoreAdd}
           onLevelComplete={handleLevelComplete}
+          onProgressUpdate={handleProgressUpdate}
           isPaused={gameState.state === 'PAUSED'}
         />
       </div>
@@ -197,6 +215,7 @@ export default function BrickBreakerPage() {
         gameState={gameState.state}
         score={gameState.score}
         level={gameState.level}
+        lives={gameState.lives}
         onResume={handleResume}
         onRestart={gameState.state === 'PAUSED' ? handleRestartLevel : handleRestart}
         onReturnToMenu={handleReturnToMenu}
